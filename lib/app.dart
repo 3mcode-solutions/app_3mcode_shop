@@ -40,6 +40,9 @@ class App extends StatelessWidget {
         BlocProvider<ThemeBloc>(
           create: (context) => ThemeBloc()..add(const LoadTheme()),
         ),
+        BlocProvider<AuthBloc>(
+          create: (context) => AuthBloc()..add(const CheckAuthStatus()),
+        ),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {

@@ -17,10 +17,10 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const ProductsScreen(),
+    const SearchScreen(),
     const CartScreen(),
-    const AboutScreen(),
-    const SettingsScreen(),
+    const OrdersScreen(),
+    const AccountScreen(),
   ];
 
   @override
@@ -54,8 +54,8 @@ class _MainScreenState extends State<MainScreen> {
                   label: AppLocalizations.of(context).translate('home'),
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.shopping_bag),
-                  label: AppLocalizations.of(context).translate('products'),
+                  icon: const Icon(Icons.search),
+                  label: AppLocalizations.of(context).translate('search'),
                 ),
                 BottomNavigationBarItem(
                   icon: Stack(
@@ -92,12 +92,12 @@ class _MainScreenState extends State<MainScreen> {
                   label: AppLocalizations.of(context).translate('cart'),
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.info),
-                  label: AppLocalizations.of(context).translate('about'),
+                  icon: const Icon(Icons.receipt_long),
+                  label: AppLocalizations.of(context).translate('orders'),
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.settings),
-                  label: AppLocalizations.of(context).translate('settings'),
+                  icon: const Icon(Icons.person),
+                  label: AppLocalizations.of(context).translate('account'),
                 ),
               ],
             );

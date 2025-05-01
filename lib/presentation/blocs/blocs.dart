@@ -18,3 +18,7 @@ export 'language/language_state.dart';
 export 'theme/theme_bloc.dart';
 export 'theme/theme_event.dart';
 export 'theme/theme_state.dart';
+
+export 'auth/auth_bloc.dart';
+export 'auth/auth_event.dart';
+export 'auth/auth_state.dart';
