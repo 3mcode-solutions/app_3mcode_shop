@@ -10,3 +10,7 @@ export 'category/category_state.dart';
 export 'cart/cart_bloc.dart';
 export 'cart/cart_event.dart';
 export 'cart/cart_state.dart';
+
+export 'language/language_bloc.dart';
+export 'language/language_event.dart';
+export 'language/language_state.dart';

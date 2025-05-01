@@ -4,6 +4,7 @@ import 'package:app_3mcode_shop/colors.dart'; // TODO: Replace with AppTheme in 
 import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
 import 'package:app_3mcode_shop/presentation/widgets/widgets.dart';
 import 'package:app_3mcode_shop/presentation/screens/product/product_detail_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/checkout/checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -53,16 +54,34 @@ class CartScreen extends StatelessWidget {
                             context.read<CartBloc>().add(
                               RemoveFromCart(cartItem.product),
                             );
+                            AnimatedToast.show(
+                              context: context,
+                              message:
+                                  '${cartItem.product.name} removed from cart',
+                              type: ToastType.info,
+                            );
                           },
                           onIncrement: () {
                             context.read<CartBloc>().add(
                               IncrementCartItemQuantity(cartItem.product),
+                            );
+                            AnimatedToast.show(
+                              context: context,
+                              message: 'Quantity increased',
+                              type: ToastType.success,
                             );
                           },
                           onDecrement: () {
                             context.read<CartBloc>().add(
                               DecrementCartItemQuantity(cartItem.product),
                             );
+                            if (cartItem.quantity > 1) {
+                              AnimatedToast.show(
+                                context: context,
+                                message: 'Quantity decreased',
+                                type: ToastType.info,
+                              );
+                            }
                           },
                         );
                       },
@@ -109,31 +128,24 @@ class CartScreen extends StatelessWidget {
                           isTotal: true,
                         ),
                         const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Checkout functionality would be implemented here
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Checkout functionality coming soon!',
-                                  ),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: const Text(
-                              'Proceed to Checkout',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        AnimatedButton(
+                          text: 'Proceed to Checkout',
+                          icon: Icons.shopping_bag,
+                          onPressed: () {
+                            AnimatedToast.show(
+                              context: context,
+                              message: 'Proceeding to checkout...',
+                              type: ToastType.info,
+                            );
+
+                            // Navigate to checkout screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CheckoutScreen(),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -177,20 +189,20 @@ class CartScreen extends StatelessWidget {
             style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
+          AnimatedButton(
+            text: 'Start Shopping',
+            icon: Icons.shopping_basket,
             onPressed: () {
+              AnimatedToast.show(
+                context: context,
+                message: 'Let\'s find some products for you!',
+                type: ToastType.info,
+              );
+
               // Navigate to products screen
               // In a real app, we would use a more sophisticated navigation approach
               Navigator.of(context).pop();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: const Text(
-              'Start Shopping',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
           ),
         ],
       ),
@@ -248,6 +260,13 @@ class CartScreen extends StatelessWidget {
                 onPressed: () {
                   context.read<CartBloc>().add(const ClearCart());
                   Navigator.of(context).pop();
+
+                  // Show success toast
+                  AnimatedToast.show(
+                    context: context,
+                    message: 'Cart cleared successfully',
+                    type: ToastType.success,
+                  );
                 },
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('Clear'),
