@@ -83,5 +83,7 @@
   "english": "English",
   "arabic": "Arabic",
   "change_language": "Change Language",
-  "language_changed": "Language changed successfully"
+  "language_changed": "Language changed successfully",
+  "dark_mode_enabled": "Dark mode enabled",
+  "light_mode_enabled": "Light mode enabled"
 }

@@ -14,3 +14,7 @@ export 'cart/cart_state.dart';
 export 'language/language_bloc.dart';
 export 'language/language_event.dart';
 export 'language/language_state.dart';
+
+export 'theme/theme_bloc.dart';
+export 'theme/theme_event.dart';
+export 'theme/theme_state.dart';

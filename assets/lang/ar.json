@@ -83,5 +83,7 @@
   "english": "الإنجليزية",
   "arabic": "العربية",
   "change_language": "تغيير اللغة",
-  "language_changed": "تم تغيير اللغة بنجاح"
+  "language_changed": "تم تغيير اللغة بنجاح",
+  "dark_mode_enabled": "تم تفعيل الوضع الداكن",
+  "light_mode_enabled": "تم تفعيل الوضع الفاتح"
 }

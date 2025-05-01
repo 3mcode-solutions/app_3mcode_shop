@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/core/localization/app_localizations.dart';
+import 'package:app_3mcode_shop/presentation/blocs/theme/theme_bloc.dart';
+import 'package:app_3mcode_shop/presentation/blocs/theme/theme_event.dart';
+import 'package:app_3mcode_shop/presentation/blocs/theme/theme_state.dart';
+import 'package:app_3mcode_shop/presentation/widgets/animated_toast.dart';
 import 'package:app_3mcode_shop/presentation/widgets/custom_app_bar.dart';
 import 'package:app_3mcode_shop/presentation/widgets/language_switcher.dart';
 
@@ -48,19 +53,53 @@ class SettingsScreen extends StatelessWidget {
             context: context,
             title: localizations.translate('theme'),
             children: [
-              _buildSettingsItem(
-                context: context,
-                icon: Icons.brightness_4,
-                title: localizations.translate('dark_mode'),
-                trailing: Switch(
-                  value: false, // Replace with actual theme state
-                  onChanged: (value) {
-                    // Implement theme change
-                  },
-                  activeColor: AppColors.primary,
-                ),
-                onTap: () {
-                  // Implement theme change
+              BlocBuilder<ThemeBloc, ThemeState>(
+                builder: (context, state) {
+                  bool isDarkMode = false;
+
+                  if (state is ThemeLoaded) {
+                    isDarkMode = state.isDarkMode;
+                  }
+
+                  return _buildSettingsItem(
+                    context: context,
+                    icon: isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                    title: localizations.translate('dark_mode'),
+                    trailing: Switch(
+                      value: isDarkMode,
+                      onChanged: (value) {
+                        context.read<ThemeBloc>().add(const ToggleTheme());
+
+                        AnimatedToast.show(
+                          context: context,
+                          message:
+                              value
+                                  ? localizations.translate('dark_mode_enabled')
+                                  : localizations.translate(
+                                    'light_mode_enabled',
+                                  ),
+                          type: ToastType.success,
+                        );
+                      },
+                      activeColor: AppColors.primary,
+                    ),
+                    onTap: () {
+                      context.read<ThemeBloc>().add(const ToggleTheme());
+
+                      final newState = context.read<ThemeBloc>().state;
+                      final willBeDarkMode =
+                          newState is ThemeLoaded ? !newState.isDarkMode : true;
+
+                      AnimatedToast.show(
+                        context: context,
+                        message:
+                            willBeDarkMode
+                                ? localizations.translate('dark_mode_enabled')
+                                : localizations.translate('light_mode_enabled'),
+                        type: ToastType.success,
+                      );
+                    },
+                  );
                 },
               ),
             ],

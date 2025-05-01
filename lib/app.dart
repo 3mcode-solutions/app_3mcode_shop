@@ -37,28 +37,41 @@ class App extends StatelessWidget {
         BlocProvider<LanguageBloc>(
           create: (context) => LanguageBloc()..add(const LoadLanguage()),
         ),
+        BlocProvider<ThemeBloc>(
+          create: (context) => ThemeBloc()..add(const LoadTheme()),
+        ),
       ],
-      child: BlocBuilder<LanguageBloc, LanguageState>(
-        builder: (context, state) {
-          Locale locale = const Locale('en');
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, themeState) {
+          bool isDarkMode = false;
 
-          if (state is LanguageLoaded) {
-            locale = state.locale;
+          if (themeState is ThemeLoaded) {
+            isDarkMode = themeState.isDarkMode;
           }
 
-          return MaterialApp(
-            title: AppConstants.appName,
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            locale: locale,
-            supportedLocales: LanguageManager.supportedLocales,
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            home: const SplashScreen(),
+          return BlocBuilder<LanguageBloc, LanguageState>(
+            builder: (context, languageState) {
+              Locale locale = const Locale('en');
+
+              if (languageState is LanguageLoaded) {
+                locale = languageState.locale;
+              }
+
+              return MaterialApp(
+                title: AppConstants.appName,
+                debugShowCheckedModeBanner: false,
+                theme: isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
+                locale: locale,
+                supportedLocales: LanguageManager.supportedLocales,
+                localizationsDelegates: [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                home: const SplashScreen(),
+              );
+            },
           );
         },
       ),
