@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/data/models/product_model.dart';
+import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
+import 'package:app_3mcode_shop/presentation/blocs/cart/cart_bloc.dart';
+import 'package:app_3mcode_shop/presentation/blocs/cart/cart_event.dart';
+import 'package:app_3mcode_shop/presentation/blocs/cart/cart_state.dart';
+import 'package:app_3mcode_shop/presentation/blocs/favorite/favorite_bloc.dart';
+import 'package:app_3mcode_shop/presentation/blocs/favorite/favorite_event.dart';
+import 'package:app_3mcode_shop/presentation/blocs/favorite/favorite_state.dart';
 
 class ProductCard extends StatelessWidget {
   final ProductModel product;
   final VoidCallback onTap;
   final VoidCallback onAddToCart;
   final bool isInCart;
+  final VoidCallback? onIncrement;
+  final VoidCallback? onDecrement;
+  final int quantity;
+  final bool isFavorite;
+  final VoidCallback onToggleFavorite;
 
   const ProductCard({
     Key? key,
@@ -14,7 +27,72 @@ class ProductCard extends StatelessWidget {
     required this.onTap,
     required this.onAddToCart,
     this.isInCart = false,
+    this.onIncrement,
+    this.onDecrement,
+    this.quantity = 0,
+    this.isFavorite = false,
+    required this.onToggleFavorite,
   }) : super(key: key);
+
+  Widget _buildQuantityControls() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Decrement button
+          GestureDetector(
+            onTap: onDecrement,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  bottomLeft: Radius.circular(15),
+                ),
+              ),
+              child: Icon(Icons.remove, size: 16, color: AppColors.primary),
+            ),
+          ),
+          // Quantity display
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              quantity.toString(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+          ),
+          // Increment button
+          GestureDetector(
+            onTap: onIncrement,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(15),
+                  bottomRight: Radius.circular(15),
+                ),
+              ),
+              child: Icon(Icons.add, size: 16, color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,23 +127,51 @@ class ProductCard extends StatelessWidget {
                       },
                     ),
                   ),
+                  // زر المفضلة
+                  Positioned(
+                    top: 6,
+                    right: 5,
+                    child: GestureDetector(
+                      onTap: onToggleFavorite,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 2,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.grey,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // زر السلة أو التحكم بالكمية
                   Positioned(
                     bottom: 6,
                     right: 5,
-                    child: GestureDetector(
-                      onTap: onAddToCart,
-                      child: CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Colors.white,
-                        child:
-                            isInCart
-                                ? const Icon(
-                                  Icons.remove_shopping_cart,
+                    child:
+                        isInCart
+                            ? _buildQuantityControls()
+                            : GestureDetector(
+                              onTap: onAddToCart,
+                              child: CircleAvatar(
+                                radius: 16,
+                                backgroundColor: Colors.white,
+                                child: const Icon(
+                                  Icons.add_shopping_cart,
                                   size: 18,
-                                )
-                                : const Icon(Icons.add_shopping_cart, size: 18),
-                      ),
-                    ),
+                                ),
+                              ),
+                            ),
                   ),
                 ],
               ),

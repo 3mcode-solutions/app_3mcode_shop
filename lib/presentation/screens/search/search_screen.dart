@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/core/localization/app_localizations.dart';
-import 'package:app_3mcode_shop/presentation/blocs/product/product_bloc.dart';
-import 'package:app_3mcode_shop/presentation/blocs/product/product_state.dart';
-import 'package:app_3mcode_shop/presentation/blocs/product/product_event.dart';
+import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
 import 'package:app_3mcode_shop/presentation/screens/product/product_detail_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/search/filter_screen.dart';
 import 'package:app_3mcode_shop/presentation/widgets/loading_indicator.dart';
 import 'package:app_3mcode_shop/presentation/widgets/error_view.dart';
 import 'package:app_3mcode_shop/presentation/widgets/product_card.dart';
@@ -39,6 +38,17 @@ class _SearchScreenState extends State<SearchScreen> {
         title: Text(localizations.translate('search')),
         centerTitle: true,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FilterScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -60,9 +70,16 @@ class _SearchScreenState extends State<SearchScreen> {
                   );
                 }
 
-                if (state is ProductLoaded) {
+                if (state is ProductLoaded ||
+                    state is ProductFilterResultsLoaded) {
+                  final products =
+                      state is ProductLoaded
+                          ? state.products
+                          : (state as ProductFilterResultsLoaded)
+                              .filteredProducts;
+
                   final filteredProducts =
-                      state.products.where((product) {
+                      products.where((product) {
                         final matchesSearch =
                             _searchQuery.isEmpty ||
                             product.name.toLowerCase().contains(
@@ -111,27 +128,60 @@ class _SearchScreenState extends State<SearchScreen> {
                     itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = filteredProducts[index];
-                      return ProductCard(
-                        product: product,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      ProductDetailScreen(product: product),
-                            ),
-                          );
-                        },
-                        onAddToCart: () {
-                          // Add to cart functionality
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                localizations.translate('item_added_to_cart'),
-                              ),
-                              duration: const Duration(seconds: 2),
-                            ),
+                      return BlocBuilder<FavoriteBloc, FavoriteState>(
+                        builder: (context, favoriteState) {
+                          bool isFavorite = false;
+
+                          if (favoriteState is FavoriteLoaded) {
+                            isFavorite = favoriteState.isFavorite(product.id);
+                          }
+
+                          return ProductCard(
+                            product: product,
+                            isFavorite: isFavorite,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          ProductDetailScreen(product: product),
+                                ),
+                              );
+                            },
+                            onAddToCart: () {
+                              // Add to cart functionality
+                              context.read<CartBloc>().add(AddToCart(product));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    localizations.translate(
+                                      'item_added_to_cart',
+                                    ),
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            onToggleFavorite: () {
+                              context.read<FavoriteBloc>().add(
+                                ToggleFavorite(product.id),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isFavorite
+                                        ? localizations.translate(
+                                          'removed_from_favorites',
+                                        )
+                                        : localizations.translate(
+                                          'added_to_favorites',
+                                        ),
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
                           );
                         },
                       );

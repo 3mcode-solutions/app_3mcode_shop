@@ -36,3 +36,13 @@ class LoadProductsByCategory extends ProductEvent {
   @override
   List<Object> get props => [categoryName];
 }
+
+/// Event to filter products by various criteria
+class FilterProducts extends ProductEvent {
+  final Map<String, dynamic> filterParams;
+
+  const FilterProducts(this.filterParams);
+
+  @override
+  List<Object> get props => [filterParams];
+}

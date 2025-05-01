@@ -4,6 +4,7 @@ import 'package:app_3mcode_shop/colors.dart'; // TODO: Replace with AppTheme in 
 import 'package:app_3mcode_shop/data/models/models.dart';
 import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
 import 'package:app_3mcode_shop/presentation/widgets/widgets.dart';
+import 'package:app_3mcode_shop/core/localization/app_localizations.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -36,15 +37,58 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Product Details'),
+        title: Text(AppLocalizations.of(context).translate('product_details')),
         actions: [
+          // Favorite button
+          BlocBuilder<FavoriteBloc, FavoriteState>(
+            builder: (context, state) {
+              bool isFavorite = false;
+
+              if (state is FavoriteLoaded) {
+                isFavorite = state.isFavorite(widget.product.id);
+              }
+
+              return IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.red : null,
+                ),
+                onPressed: () {
+                  context.read<FavoriteBloc>().add(
+                    ToggleFavorite(widget.product.id),
+                  );
+
+                  // Show confirmation message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isFavorite
+                            ? AppLocalizations.of(
+                              context,
+                            ).translate('removed_from_favorites')
+                            : AppLocalizations.of(
+                              context,
+                            ).translate('added_to_favorites'),
+                      ),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+
+          // Share button
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
-              // Share functionality would be implemented here
+              // Show a simple share message
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Share functionality coming soon!'),
+                SnackBar(
+                  content: Text(
+                    AppLocalizations.of(context).translate('share_product'),
+                  ),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             },

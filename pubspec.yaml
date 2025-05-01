@@ -51,6 +51,9 @@ dependencies:
   shared_preferences: ^2.5.3
   image_picker: ^1.1.2
 
+  # Sharing
+  share_plus: ^11.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

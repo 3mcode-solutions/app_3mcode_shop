@@ -6,10 +6,12 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/core/constants/assets_paths.dart';
 import 'package:app_3mcode_shop/data/datasources/local/local_data.dart';
+import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
 import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
 import 'package:app_3mcode_shop/presentation/screens/cart/cart_screen.dart';
 import 'package:app_3mcode_shop/presentation/screens/auth/login_screen.dart';
 import 'package:app_3mcode_shop/presentation/screens/account/profile_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/favorite/favorites_screen.dart';
 import 'package:app_3mcode_shop/presentation/widgets/widgets.dart';
 import 'package:app_3mcode_shop/presentation/screens/product/product_detail_screen.dart';
 
@@ -35,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final isAuthenticated = state is Authenticated;
-        final user = isAuthenticated ? (state as Authenticated).user : null;
+        final user = isAuthenticated ? state.user : null;
 
         return GestureDetector(
           onTap: () {
@@ -126,6 +128,58 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildFavoriteIcon(BuildContext context) {
+    return BlocBuilder<FavoriteBloc, FavoriteState>(
+      builder: (context, state) {
+        int favoriteCount = 0;
+
+        if (state is FavoriteLoaded) {
+          favoriteCount = state.favorites.length;
+        }
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FavoritesScreen()),
+            );
+          },
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const Icon(Icons.favorite, color: Colors.red, size: 28),
+              if (favoriteCount > 0)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      favoriteCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   ImageProvider _getProfileImage(String photoUrl) {
     if (photoUrl.startsWith('/')) {
       return FileImage(File(photoUrl));
@@ -156,11 +210,16 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.favorite),
+            leading: const Icon(Icons.favorite, color: Colors.red),
             title: const Text('المفضلة'),
             onTap: () {
               Navigator.pop(context);
-              // يمكن إضافة التنقل إلى صفحة المفضلة هنا
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FavoritesScreen(),
+                ),
+              );
             },
           ),
           ListTile(
@@ -332,6 +391,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const Spacer(),
             _buildUserAvatar(context),
             const SizedBox(width: 16),
+            _buildFavoriteIcon(context),
+            const SizedBox(width: 16),
             _buildCartIcon(context),
           ],
         ),
@@ -502,30 +563,79 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8.0,
                                 ),
-                                child: ProductCard(
-                                  product: product,
-                                  isInCart: isInCart,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => ProductDetailScreen(
-                                              product: product,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  onAddToCart: () {
-                                    if (isInCart) {
-                                      context.read<CartBloc>().add(
-                                        RemoveFromCart(product),
-                                      );
-                                    } else {
-                                      context.read<CartBloc>().add(
-                                        AddToCart(product),
+                                child: BlocBuilder<FavoriteBloc, FavoriteState>(
+                                  builder: (context, favoriteState) {
+                                    bool isFavorite = false;
+
+                                    if (favoriteState is FavoriteLoaded) {
+                                      isFavorite = favoriteState.isFavorite(
+                                        product.id,
                                       );
                                     }
+
+                                    return ProductCard(
+                                      product: product,
+                                      isInCart: isInCart,
+                                      isFavorite: isFavorite,
+                                      quantity:
+                                          isInCart && cartState is CartLoaded
+                                              ? (cartState as CartLoaded).items
+                                                  .firstWhere(
+                                                    (item) =>
+                                                        item.product.name ==
+                                                        product.name,
+                                                    orElse:
+                                                        () => CartItemModel(
+                                                          product: product,
+                                                        ),
+                                                  )
+                                                  .quantity
+                                              : 0,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) =>
+                                                    ProductDetailScreen(
+                                                      product: product,
+                                                    ),
+                                          ),
+                                        );
+                                      },
+                                      onAddToCart: () {
+                                        if (!isInCart) {
+                                          context.read<CartBloc>().add(
+                                            AddToCart(product),
+                                          );
+                                        }
+                                      },
+                                      onIncrement:
+                                          isInCart
+                                              ? () {
+                                                context.read<CartBloc>().add(
+                                                  IncrementCartItemQuantity(
+                                                    product,
+                                                  ),
+                                                );
+                                              }
+                                              : null,
+                                      onDecrement:
+                                          isInCart
+                                              ? () {
+                                                context.read<CartBloc>().add(
+                                                  DecrementCartItemQuantity(
+                                                    product,
+                                                  ),
+                                                );
+                                              }
+                                              : null,
+                                      onToggleFavorite: () {
+                                        context.read<FavoriteBloc>().add(
+                                          ToggleFavorite(product.id),
+                                        );
+                                      },
+                                    );
                                   },
                                 ),
                               );
@@ -587,30 +697,78 @@ class _HomeScreenState extends State<HomeScreen> {
                               );
                             }
 
-                            return ProductCard(
-                              product: product,
-                              isInCart: isInCart,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) => ProductDetailScreen(
-                                          product: product,
-                                        ),
-                                  ),
-                                );
-                              },
-                              onAddToCart: () {
-                                if (isInCart) {
-                                  context.read<CartBloc>().add(
-                                    RemoveFromCart(product),
-                                  );
-                                } else {
-                                  context.read<CartBloc>().add(
-                                    AddToCart(product),
+                            return BlocBuilder<FavoriteBloc, FavoriteState>(
+                              builder: (context, favoriteState) {
+                                bool isFavorite = false;
+
+                                if (favoriteState is FavoriteLoaded) {
+                                  isFavorite = favoriteState.isFavorite(
+                                    product.id,
                                   );
                                 }
+
+                                return ProductCard(
+                                  product: product,
+                                  isInCart: isInCart,
+                                  isFavorite: isFavorite,
+                                  quantity:
+                                      isInCart && cartState is CartLoaded
+                                          ? cartState.items
+                                              .firstWhere(
+                                                (item) =>
+                                                    item.product.name ==
+                                                    product.name,
+                                                orElse:
+                                                    () => CartItemModel(
+                                                      product: product,
+                                                    ),
+                                              )
+                                              .quantity
+                                          : 0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => ProductDetailScreen(
+                                              product: product,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  onAddToCart: () {
+                                    if (!isInCart) {
+                                      context.read<CartBloc>().add(
+                                        AddToCart(product),
+                                      );
+                                    }
+                                  },
+                                  onIncrement:
+                                      isInCart
+                                          ? () {
+                                            context.read<CartBloc>().add(
+                                              IncrementCartItemQuantity(
+                                                product,
+                                              ),
+                                            );
+                                          }
+                                          : null,
+                                  onDecrement:
+                                      isInCart
+                                          ? () {
+                                            context.read<CartBloc>().add(
+                                              DecrementCartItemQuantity(
+                                                product,
+                                              ),
+                                            );
+                                          }
+                                          : null,
+                                  onToggleFavorite: () {
+                                    context.read<FavoriteBloc>().add(
+                                      ToggleFavorite(product.id),
+                                    );
+                                  },
+                                );
                               },
                             );
                           },

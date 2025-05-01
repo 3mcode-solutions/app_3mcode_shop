@@ -18,4 +18,5 @@ export 'account/account_screen.dart';
 export 'account/about_app_screen.dart';
 export 'account/profile_screen.dart';
 export 'auth/login_screen.dart';
+export 'favorite/favorites_screen.dart';
 export 'auth/register_screen.dart';

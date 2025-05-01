@@ -43,6 +43,9 @@ class App extends StatelessWidget {
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc()..add(const CheckAuthStatus()),
         ),
+        BlocProvider<FavoriteBloc>(
+          create: (context) => FavoriteBloc()..add(const LoadFavorites()),
+        ),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {

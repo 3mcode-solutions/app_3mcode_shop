@@ -4,6 +4,8 @@ import 'package:app_3mcode_shop/core/localization/app_localizations.dart';
 import 'package:app_3mcode_shop/data/models/order_model.dart';
 import 'package:app_3mcode_shop/data/models/address_model.dart';
 import 'package:app_3mcode_shop/data/models/payment_method_model.dart';
+import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
+import 'package:app_3mcode_shop/data/models/product_model.dart';
 import 'package:app_3mcode_shop/presentation/screens/orders/order_details_screen.dart';
 
 class OrdersScreen extends StatelessWidget {
@@ -203,7 +205,12 @@ class OrdersScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: Color.fromRGBO(
+          color.r.toInt(),
+          color.g.toInt(),
+          color.b.toInt(),
+          0.1,
+        ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color),
       ),
@@ -249,10 +256,80 @@ class OrdersScreen extends StatelessWidget {
       iconPath: 'assets/icons/credit_card.png',
     );
 
+    // Create mock cart items
+    final mockItems1 = [
+      CartItemModel(
+        product: ProductModel(
+          name: 'Smartphone X',
+          image: 'assets/images/products/smartphone.jpg',
+          price: '80.0',
+          rate: '4.5',
+          rateCount: '120',
+        ),
+        quantity: 1,
+      ),
+      CartItemModel(
+        product: ProductModel(
+          name: 'Wireless Headphones',
+          image: 'assets/images/products/headphones.jpg',
+          price: '45.0',
+          rate: '4.2',
+          rateCount: '85',
+        ),
+        quantity: 1,
+      ),
+    ];
+
+    final mockItems2 = [
+      CartItemModel(
+        product: ProductModel(
+          name: 'Running Shoes',
+          image: 'assets/images/products/shoes.jpg',
+          price: '85.5',
+          rate: '4.0',
+          rateCount: '65',
+        ),
+        quantity: 1,
+      ),
+    ];
+
+    final mockItems3 = [
+      CartItemModel(
+        product: ProductModel(
+          name: 'Smart Watch',
+          image: 'assets/images/products/watch.jpg',
+          price: '120.0',
+          rate: '4.7',
+          rateCount: '150',
+        ),
+        quantity: 1,
+      ),
+      CartItemModel(
+        product: ProductModel(
+          name: 'Laptop Backpack',
+          image: 'assets/images/products/backpack.jpg',
+          price: '45.0',
+          rate: '4.3',
+          rateCount: '78',
+        ),
+        quantity: 1,
+      ),
+      CartItemModel(
+        product: ProductModel(
+          name: 'Wireless Charger',
+          image: 'assets/images/products/charger.jpg',
+          price: '35.0',
+          rate: '4.1',
+          rateCount: '45',
+        ),
+        quantity: 2,
+      ),
+    ];
+
     return [
       OrderModel(
         id: 'ORD-1234567',
-        items: [],
+        items: mockItems1,
         shippingAddress: mockAddress,
         paymentMethod: mockPaymentMethod,
         subtotal: 120.0,
@@ -264,7 +341,7 @@ class OrdersScreen extends StatelessWidget {
       ),
       OrderModel(
         id: 'ORD-7654321',
-        items: [],
+        items: mockItems2,
         shippingAddress: mockAddress,
         paymentMethod: mockPaymentMethod,
         subtotal: 85.5,
@@ -276,7 +353,7 @@ class OrdersScreen extends StatelessWidget {
       ),
       OrderModel(
         id: 'ORD-9876543',
-        items: [],
+        items: mockItems3,
         shippingAddress: mockAddress,
         paymentMethod: mockPaymentMethod,
         subtotal: 210.0,

@@ -19,6 +19,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const SearchScreen(),
     const CartScreen(),
+    const FavoritesScreen(),
     const OrdersScreen(),
     const AccountScreen(),
   ];
@@ -90,6 +91,10 @@ class _MainScreenState extends State<MainScreen> {
                     ],
                   ),
                   label: AppLocalizations.of(context).translate('cart'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.favorite),
+                  label: AppLocalizations.of(context).translate('favorites'),
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.receipt_long),

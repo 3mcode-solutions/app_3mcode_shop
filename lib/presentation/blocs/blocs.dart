@@ -22,3 +22,7 @@ export 'theme/theme_state.dart';
 export 'auth/auth_bloc.dart';
 export 'auth/auth_event.dart';
 export 'auth/auth_state.dart';
+
+export 'favorite/favorite_bloc.dart';
+export 'favorite/favorite_event.dart';
+export 'favorite/favorite_state.dart';
