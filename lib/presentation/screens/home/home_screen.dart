@@ -8,6 +8,7 @@ import 'package:app_3mcode_shop/core/constants/assets_paths.dart';
 import 'package:app_3mcode_shop/core/localization/app_localizations.dart';
 import 'package:app_3mcode_shop/data/datasources/local/local_data.dart';
 import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
+import 'package:app_3mcode_shop/data/models/product_model.dart';
 import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
 import 'package:app_3mcode_shop/presentation/screens/cart/cart_screen.dart';
 import 'package:app_3mcode_shop/presentation/screens/auth/login_screen.dart';
@@ -15,6 +16,7 @@ import 'package:app_3mcode_shop/presentation/screens/account/profile_screen.dart
 import 'package:app_3mcode_shop/presentation/screens/favorite/favorites_screen.dart';
 import 'package:app_3mcode_shop/presentation/widgets/widgets.dart';
 import 'package:app_3mcode_shop/presentation/screens/product/product_detail_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/product/product_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -781,10 +783,384 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               const SizedBox(height: 20),
+
+              // منتجات مخفضة
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      ).translate('discounted_products'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ProductListScreen(
+                                  title: AppLocalizations.of(
+                                    context,
+                                  ).translate('discounted_products'),
+                                  products: LocalData.getDiscountedProducts(),
+                                  type: ProductListType.discounted,
+                                ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        AppLocalizations.of(context).translate('see_all'),
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              SizedBox(
+                height: 250,
+                child: _buildProductHorizontalList(
+                  context: context,
+                  products: LocalData.getDiscountedProducts(),
+                  showDiscountBadge: true,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // الأكثر مبيعًا
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context).translate('best_selling'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ProductListScreen(
+                                  title: AppLocalizations.of(
+                                    context,
+                                  ).translate('best_selling'),
+                                  products: LocalData.getBestSellingProducts(),
+                                  type: ProductListType.bestSelling,
+                                ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        AppLocalizations.of(context).translate('see_all'),
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              SizedBox(
+                height: 250,
+                child: _buildProductHorizontalList(
+                  context: context,
+                  products: LocalData.getBestSellingProducts(),
+                  showBestSellerBadge: true,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // منتجات موسمية
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      ).translate('seasonal_products'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ProductListScreen(
+                                  title: AppLocalizations.of(
+                                    context,
+                                  ).translate('seasonal_products'),
+                                  products: LocalData.getSeasonalProducts(),
+                                  type: ProductListType.seasonal,
+                                ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        AppLocalizations.of(context).translate('see_all'),
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              SizedBox(
+                height: 250,
+                child: _buildProductHorizontalList(
+                  context: context,
+                  products: LocalData.getSeasonalProducts(),
+                  showSeasonalBadge: true,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // اكتشف المزيد
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context).translate('discover_more'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ProductListScreen(
+                                  title: AppLocalizations.of(
+                                    context,
+                                  ).translate('discover_more'),
+                                  products: LocalData.getDiscoverMoreProducts(),
+                                  type: ProductListType.discoverMore,
+                                ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        AppLocalizations.of(context).translate('see_all'),
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              SizedBox(
+                height: 250,
+                child: _buildProductHorizontalList(
+                  context: context,
+                  products: LocalData.getDiscoverMoreProducts(),
+                ),
+              ),
+
+              const SizedBox(height: 30),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildProductHorizontalList({
+    required BuildContext context,
+    required List<ProductModel> products,
+    bool showDiscountBadge = false,
+    bool showBestSellerBadge = false,
+    bool showSeasonalBadge = false,
+  }) {
+    return BlocBuilder<CartBloc, CartState>(
+      builder: (context, cartState) {
+        return ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            final product = products[index];
+            bool isInCart = false;
+
+            if (cartState is CartLoaded) {
+              isInCart = cartState.items.any(
+                (item) => item.product.name == product.name,
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: BlocBuilder<FavoriteBloc, FavoriteState>(
+                builder: (context, favoriteState) {
+                  bool isFavorite = false;
+
+                  if (favoriteState is FavoriteLoaded) {
+                    isFavorite = favoriteState.isFavorite(product.id);
+                  }
+
+                  return Stack(
+                    children: [
+                      ProductCard(
+                        product: product,
+                        isInCart: isInCart,
+                        isFavorite: isFavorite,
+                        quantity:
+                            isInCart && cartState is CartLoaded
+                                ? cartState.items
+                                    .firstWhere(
+                                      (item) =>
+                                          item.product.name == product.name,
+                                      orElse:
+                                          () => CartItemModel(product: product),
+                                    )
+                                    .quantity
+                                : 0,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) =>
+                                      ProductDetailScreen(product: product),
+                            ),
+                          );
+                        },
+                        onAddToCart: () {
+                          if (!isInCart) {
+                            context.read<CartBloc>().add(AddToCart(product));
+                          }
+                        },
+                        onIncrement:
+                            isInCart
+                                ? () {
+                                  context.read<CartBloc>().add(
+                                    IncrementCartItemQuantity(product),
+                                  );
+                                }
+                                : null,
+                        onDecrement:
+                            isInCart
+                                ? () {
+                                  context.read<CartBloc>().add(
+                                    DecrementCartItemQuantity(product),
+                                  );
+                                }
+                                : null,
+                        onToggleFavorite: () {
+                          context.read<FavoriteBloc>().add(
+                            ToggleFavorite(product.id),
+                          );
+                        },
+                      ),
+                      if (showDiscountBadge)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "20% OFF",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (showBestSellerBadge)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "BEST SELLER",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (showSeasonalBadge)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "SEASONAL",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

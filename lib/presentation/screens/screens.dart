@@ -14,6 +14,7 @@ export 'settings/language_screen.dart';
 export 'search/search_screen.dart';
 export 'orders/orders_screen.dart';
 export 'orders/order_details_screen.dart';
+export 'orders/order_tracking_screen_osm.dart';
 export 'account/account_screen.dart';
 export 'account/about_app_screen.dart';
 export 'account/profile_screen.dart';

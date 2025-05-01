@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/core/localization/app_localizations.dart';
 import 'package:app_3mcode_shop/data/models/order_model.dart';
+import 'package:app_3mcode_shop/presentation/screens/orders/order_tracking_screen_osm.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   final OrderModel order;
@@ -270,10 +271,12 @@ class OrderDetailsScreen extends StatelessWidget {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () {
-              // In a real app, this would track the order
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(localizations.translate('tracking_info_sent')),
+              // Navigate to order tracking screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => OrderTrackingScreenOSM(orderId: order.id),
                 ),
               );
             },

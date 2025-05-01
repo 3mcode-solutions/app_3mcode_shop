@@ -54,6 +54,11 @@ dependencies:
   # Sharing
   share_plus: ^11.0.0
 
+  # Maps and location
+  http: ^1.3.0
+  flutter_map: ^5.0.0
+  latlong2: ^0.9.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -86,6 +91,7 @@ flutter:
     - assets/category/
     - assets/icons/
     - assets/lang/
+    - assets/maps/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

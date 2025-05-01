@@ -6,16 +6,12 @@ import 'package:app_3mcode_shop/data/models/models.dart';
 class LocalData {
   // Private constructor to prevent instantiation
   LocalData._();
-  
+
   /// Get list of banner images
   static List<String> getBanners() {
-    return [
-      AssetPaths.slider1,
-      AssetPaths.slider2,
-      AssetPaths.slider3,
-    ];
+    return [AssetPaths.slider1, AssetPaths.slider2, AssetPaths.slider3];
   }
-  
+
   /// Get list of categories
   static List<CategoryModel> getCategories() {
     return [
@@ -35,7 +31,199 @@ class LocalData {
       CategoryModel(name: 'Home Care', image: AssetPaths.laundry),
     ];
   }
-  
+
+  /// Get list of discounted products
+  static List<ProductModel> getDiscountedProducts() {
+    return [
+      ProductModel(
+        name: "Premium Banana",
+        image: AssetPaths.banana,
+        price: "5.99",
+        rate: "4.8",
+        rateCount: "523",
+      ),
+      ProductModel(
+        name: "Fresh Orange",
+        image: AssetPaths.orange,
+        price: "4.99",
+        rate: "4.7",
+        rateCount: "412",
+      ),
+      ProductModel(
+        name: "Organic Egg",
+        image: AssetPaths.egg,
+        price: "6.99",
+        rate: "4.9",
+        rateCount: "345",
+      ),
+      ProductModel(
+        name: "Green Papper",
+        image: AssetPaths.papper,
+        price: "3.99",
+        rate: "4.5",
+        rateCount: "278",
+      ),
+      ProductModel(
+        name: "Mixed Fruits",
+        image: AssetPaths.fruits,
+        price: "8.99",
+        rate: "4.6",
+        rateCount: "189",
+      ),
+      ProductModel(
+        name: "Fresh Vegetables",
+        image: AssetPaths.vegetables,
+        price: "7.99",
+        rate: "4.4",
+        rateCount: "234",
+      ),
+    ];
+  }
+
+  /// Get list of best selling products
+  static List<ProductModel> getBestSellingProducts() {
+    return [
+      ProductModel(
+        name: "Red Papper",
+        image: AssetPaths.papper,
+        price: "3.49",
+        rate: "4.2",
+        rateCount: "645",
+      ),
+      ProductModel(
+        name: "Fresh Banana",
+        image: AssetPaths.banana,
+        price: "4.99",
+        rate: "4.5",
+        rateCount: "720",
+      ),
+      ProductModel(
+        name: "Sweet Orange",
+        image: AssetPaths.orange,
+        price: "2.49",
+        rate: "4.7",
+        rateCount: "812",
+      ),
+      ProductModel(
+        name: "Farm Egg",
+        image: AssetPaths.egg,
+        price: "2.99",
+        rate: "4.3",
+        rateCount: "578",
+      ),
+      ProductModel(
+        name: "Fresh Vegetables",
+        image: AssetPaths.vegetables,
+        price: "3.99",
+        rate: "4.6",
+        rateCount: "489",
+      ),
+      ProductModel(
+        name: "Beverages Pack",
+        image: AssetPaths.beverages,
+        price: "12.99",
+        rate: "4.8",
+        rateCount: "623",
+      ),
+    ];
+  }
+
+  /// Get list of seasonal products
+  static List<ProductModel> getSeasonalProducts() {
+    return [
+      ProductModel(
+        name: "Summer Orange",
+        image: AssetPaths.orange,
+        price: "3.99",
+        rate: "4.6",
+        rateCount: "387",
+      ),
+      ProductModel(
+        name: "Seasonal Fruits",
+        image: AssetPaths.fruits,
+        price: "9.99",
+        rate: "4.8",
+        rateCount: "287",
+      ),
+      ProductModel(
+        name: "Fresh Vegetables",
+        image: AssetPaths.vegetables,
+        price: "7.99",
+        rate: "4.7",
+        rateCount: "347",
+      ),
+      ProductModel(
+        name: "Special Egg Pack",
+        image: AssetPaths.egg,
+        price: "5.99",
+        rate: "4.5",
+        rateCount: "267",
+      ),
+      ProductModel(
+        name: "Summer Drinks",
+        image: AssetPaths.beverages,
+        price: "8.99",
+        rate: "4.9",
+        rateCount: "427",
+      ),
+      ProductModel(
+        name: "Fresh Banana",
+        image: AssetPaths.banana,
+        price: "4.99",
+        rate: "4.4",
+        rateCount: "317",
+      ),
+    ];
+  }
+
+  /// Get list of discover more products
+  static List<ProductModel> getDiscoverMoreProducts() {
+    return [
+      ProductModel(
+        name: "Cleaning Kit",
+        image: AssetPaths.laundry,
+        price: "15.99",
+        rate: "4.7",
+        rateCount: "187",
+      ),
+      ProductModel(
+        name: "Fruit Basket",
+        image: AssetPaths.fruits,
+        price: "12.99",
+        rate: "4.8",
+        rateCount: "237",
+      ),
+      ProductModel(
+        name: "Vegetable Mix",
+        image: AssetPaths.vegetables,
+        price: "9.99",
+        rate: "4.6",
+        rateCount: "197",
+      ),
+      ProductModel(
+        name: "Beverage Pack",
+        image: AssetPaths.beverages,
+        price: "18.99",
+        rate: "4.9",
+        rateCount: "327",
+      ),
+      ProductModel(
+        name: "Premium Eggs",
+        image: AssetPaths.egg,
+        price: "7.99",
+        rate: "4.5",
+        rateCount: "217",
+      ),
+      ProductModel(
+        name: "Organic Banana",
+        image: AssetPaths.banana,
+        price: "6.99",
+        rate: "4.7",
+        rateCount: "247",
+      ),
+    ];
+  }
+
   /// Get list of products
   static List<ProductModel> getProducts() {
     return [
@@ -139,7 +327,7 @@ class LocalData {
       ),
     ];
   }
-  
+
   /// Get initial cart items (for demo purposes)
   static List<CartItemModel> getInitialCartItems() {
     final products = getProducts();
