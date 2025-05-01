@@ -9,3 +9,4 @@ export 'animated_button.dart';
 export 'animated_text_field.dart';
 export 'animated_toast.dart';
 export 'language_switcher.dart';
+export 'animated_favorite_icon.dart';

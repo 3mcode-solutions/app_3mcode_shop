@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/core/constants/assets_paths.dart';
+import 'package:app_3mcode_shop/core/localization/app_localizations.dart';
 import 'package:app_3mcode_shop/data/datasources/local/local_data.dart';
 import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
 import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
@@ -137,44 +138,40 @@ class _HomeScreenState extends State<HomeScreen> {
           favoriteCount = state.favorites.length;
         }
 
-        return GestureDetector(
+        return AnimatedFavoriteIcon(
+          favoriteCount: favoriteCount,
           onTap: () {
+            // حفظ مرجع للسياق الحالي
+            final currentContext = context;
+
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const FavoritesScreen()),
-            );
-          },
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              const Icon(Icons.favorite, color: Colors.red, size: 28),
-              if (favoriteCount > 0)
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      favoriteCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
+            ).then((_) {
+              // التحقق من أن السياق لا يزال صالحًا
+              if (currentContext.mounted) {
+                // عرض رسالة تأكيد بعد العودة من شاشة المفضلة
+                final localizations = AppLocalizations.of(currentContext);
+                ScaffoldMessenger.of(currentContext).showSnackBar(
+                  SnackBar(
+                    content: Text(localizations.translate('favorites_viewed')),
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: AppColors.primary,
+                    action: SnackBarAction(
+                      label: localizations.translate('ok'),
+                      textColor: Colors.white,
+                      onPressed: () {
+                        ScaffoldMessenger.of(
+                          currentContext,
+                        ).hideCurrentSnackBar();
+                      },
                     ),
                   ),
-                ),
-            ],
-          ),
+                );
+              }
+            });
+          },
         );
       },
     );

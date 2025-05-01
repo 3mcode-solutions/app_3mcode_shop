@@ -428,6 +428,37 @@ void showAnimatedToast(BuildContext context, String message, {bool isError = fal
 }
 ```
 
+### أيقونة المفضلة المتحركة
+
+```dart
+AnimatedFavoriteIcon(
+  favoriteCount: 5,
+  onTap: () {
+    // إجراء عند النقر
+  },
+)
+```
+
+### رسائل التأكيد (Snackbar)
+
+```dart
+ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+    content: Text('تم عرض المفضلة بنجاح'),
+    duration: const Duration(seconds: 2),
+    behavior: SnackBarBehavior.floating,
+    backgroundColor: AppColors.primary,
+    action: SnackBarAction(
+      label: 'موافق',
+      textColor: Colors.white,
+      onPressed: () {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      },
+    ),
+  ),
+)
+```
+
 ## <a id="accessibility"></a>إمكانية الوصول
 
 يهتم التطبيق بتوفير تجربة مستخدم جيدة لجميع المستخدمين، بما في ذلك ذوي الاحتياجات الخاصة.
