@@ -17,6 +17,7 @@ import 'package:app_3mcode_shop/presentation/screens/favorite/favorites_screen.d
 import 'package:app_3mcode_shop/presentation/widgets/widgets.dart';
 import 'package:app_3mcode_shop/presentation/screens/product/product_detail_screen.dart';
 import 'package:app_3mcode_shop/presentation/screens/product/product_list_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/settings/theme_settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -260,7 +261,32 @@ class _HomeScreenState extends State<HomeScreen> {
             title: const Text('الإعدادات'),
             onTap: () {
               Navigator.pop(context);
-              // يمكن إضافة التنقل إلى صفحة الإعدادات هنا
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ThemeSettingsScreen(),
+                ),
+              );
+            },
+          ),
+          BlocBuilder<ThemeBloc, ThemeState>(
+            builder: (context, state) {
+              final isDarkMode =
+                  state is ThemeLoaded ? state.isDarkMode : false;
+              return ListTile(
+                leading: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+                title: Text(isDarkMode ? 'الوضع الفاتح' : 'الوضع الداكن'),
+                trailing: Switch(
+                  value: isDarkMode,
+                  activeColor: AppColors.primary,
+                  onChanged: (value) {
+                    context.read<ThemeBloc>().add(const ToggleTheme());
+                  },
+                ),
+                onTap: () {
+                  context.read<ThemeBloc>().add(const ToggleTheme());
+                },
+              );
             },
           ),
           BlocBuilder<AuthBloc, AuthState>(

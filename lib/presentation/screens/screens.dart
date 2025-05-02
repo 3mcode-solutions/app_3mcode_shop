@@ -11,6 +11,7 @@ export 'checkout/payment_screen.dart';
 export 'checkout/order_confirmation_screen.dart';
 export 'settings/settings_screen.dart';
 export 'settings/language_screen.dart';
+export 'settings/theme_settings_screen.dart';
 export 'search/search_screen.dart';
 export 'orders/orders_screen.dart';
 export 'orders/order_details_screen.dart';
