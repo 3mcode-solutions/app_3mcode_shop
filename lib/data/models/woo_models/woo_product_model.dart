@@ -32,23 +32,34 @@ class WooProductCategory extends Equatable {
   final int id;
   final String name;
   final String? slug;
+  final String? image;
 
   const WooProductCategory({
     required this.id,
     required this.name,
     this.slug,
+    this.image,
   });
 
   factory WooProductCategory.fromJson(Map<String, dynamic> json) {
+    String? imageUrl;
+
+    // Extract image URL if available
+    if (json['image'] != null) {
+      final imageData = json['image'] as Map<String, dynamic>;
+      imageUrl = imageData['src'] as String?;
+    }
+
     return WooProductCategory(
       id: json['id'] as int,
       name: json['name'] as String,
       slug: json['slug'] as String?,
+      image: imageUrl,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, slug];
+  List<Object?> get props => [id, name, slug, image];
 }
 
 /// Model class for WooCommerce product attribute
@@ -76,7 +87,8 @@ class WooProductAttribute extends Equatable {
       position: json['position'] as int,
       visible: json['visible'] as bool,
       variation: json['variation'] as bool,
-      options: (json['options'] as List<dynamic>).map((e) => e as String).toList(),
+      options:
+          (json['options'] as List<dynamic>).map((e) => e as String).toList(),
     );
   }
 
@@ -258,23 +270,40 @@ class WooProduct extends Equatable {
       reviewsAllowed: json['reviews_allowed'] as bool?,
       averageRating: json['average_rating'] as String?,
       ratingCount: json['rating_count'] as int?,
-      relatedIds: (json['related_ids'] as List<dynamic>?)?.map((e) => e as int).toList(),
-      upsellIds: (json['upsell_ids'] as List<dynamic>?)?.map((e) => e as int).toList(),
-      crossSellIds: (json['cross_sell_ids'] as List<dynamic>?)?.map((e) => e as int).toList(),
+      relatedIds:
+          (json['related_ids'] as List<dynamic>?)
+              ?.map((e) => e as int)
+              .toList(),
+      upsellIds:
+          (json['upsell_ids'] as List<dynamic>?)?.map((e) => e as int).toList(),
+      crossSellIds:
+          (json['cross_sell_ids'] as List<dynamic>?)
+              ?.map((e) => e as int)
+              .toList(),
       parentId: json['parent_id'] as int?,
       purchaseNote: json['purchase_note'] as String?,
-      categories: (json['categories'] as List<dynamic>?)
-          ?.map((e) => WooProductCategory.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [],
+      categories:
+          (json['categories'] as List<dynamic>?)
+              ?.map(
+                (e) => WooProductCategory.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
       tags: json['tags'] as List<dynamic>?,
-      images: (json['images'] as List<dynamic>?)
-          ?.map((e) => WooProductImage.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [],
-      attributes: (json['attributes'] as List<dynamic>?)
-          ?.map((e) => WooProductAttribute.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      images:
+          (json['images'] as List<dynamic>?)
+              ?.map((e) => WooProductImage.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      attributes:
+          (json['attributes'] as List<dynamic>?)
+              ?.map(
+                (e) => WooProductAttribute.fromJson(e as Map<String, dynamic>),
+              )
+              .toList(),
       defaultAttributes: json['default_attributes'] as List<dynamic>?,
-      variations: (json['variations'] as List<dynamic>?)?.map((e) => e as int).toList(),
+      variations:
+          (json['variations'] as List<dynamic>?)?.map((e) => e as int).toList(),
       groupedProducts: json['grouped_products'] as List<dynamic>?,
       menuOrder: json['menu_order'] as int?,
       metaData: json['meta_data'] as List<dynamic>?,

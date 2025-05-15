@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/data/models/category_model.dart';
 
@@ -47,10 +48,37 @@ class CategoryItem extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Image.asset(
-                category.image,
-                fit: BoxFit.contain,
-              ),
+              child:
+                  category.image.startsWith('http')
+                      ? CachedNetworkImage(
+                        imageUrl: category.image,
+                        fit: BoxFit.contain,
+                        placeholder:
+                            (context, url) => const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                        errorWidget:
+                            (context, url, error) => Image.asset(
+                              'assets/category/fruits.png',
+                              fit: BoxFit.contain,
+                            ),
+                      )
+                      : Image.asset(
+                        category.image,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/category/fruits.png',
+                            fit: BoxFit.contain,
+                          );
+                        },
+                      ),
             ),
             const SizedBox(height: 8),
             Text(

@@ -22,7 +22,7 @@ import 'package:app_3mcode_shop/presentation/screens/settings/theme_settings_scr
 import 'package:app_3mcode_shop/presentation/screens/woo_products_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -359,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final isAuthenticated = state is Authenticated;
-        final user = isAuthenticated ? (state as Authenticated).user : null;
+        final user = isAuthenticated ? state.user : null;
 
         return DrawerHeader(
           decoration: const BoxDecoration(color: AppColors.primary),
@@ -541,8 +541,20 @@ class _HomeScreenState extends State<HomeScreen> {
                               context.read<CategoryBloc>().add(
                                 SelectCategory(category.name),
                               );
+                              // Load products by category ID for more accurate results
                               context.read<ProductBloc>().add(
-                                LoadProductsByCategory(category.name),
+                                LoadProductsByCategoryId(category.id),
+                              );
+
+                              // Show a snackbar to indicate loading products
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Loading products from category: ${category.name}',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
                               );
                             },
                           );
@@ -619,7 +631,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       isFavorite: isFavorite,
                                       quantity:
                                           isInCart && cartState is CartLoaded
-                                              ? (cartState as CartLoaded).items
+                                              ? cartState.items
                                                   .firstWhere(
                                                     (item) =>
                                                         item.product.name ==

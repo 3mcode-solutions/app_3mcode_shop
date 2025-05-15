@@ -13,6 +13,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<LoadFeaturedProducts>(_onLoadFeaturedProducts);
     on<SearchProducts>(_onSearchProducts);
     on<LoadProductsByCategory>(_onLoadProductsByCategory);
+    on<LoadProductsByCategoryId>(_onLoadProductsByCategoryId);
     on<FilterProducts>(_onFilterProducts);
   }
 
@@ -79,6 +80,27 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         ProductsByCategoryLoaded(
           products: products,
           categoryName: event.categoryName,
+        ),
+      );
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  Future<void> _onLoadProductsByCategoryId(
+    LoadProductsByCategoryId event,
+    Emitter<ProductState> emit,
+  ) async {
+    emit(const ProductLoading());
+
+    try {
+      final products = await _productRepository.getProductsByCategoryId(
+        event.categoryId,
+      );
+      emit(
+        ProductsByCategoryLoaded(
+          products: products,
+          categoryId: event.categoryId,
         ),
       );
     } catch (e) {

@@ -15,20 +15,24 @@ class LocalData {
   /// Get list of categories
   static List<CategoryModel> getCategories() {
     return [
-      CategoryModel(name: 'Fruits', image: AssetPaths.fruits),
-      CategoryModel(name: 'Milk & Egg', image: AssetPaths.egg),
-      CategoryModel(name: 'Beverages', image: AssetPaths.beverages),
-      CategoryModel(name: 'Laundry', image: AssetPaths.laundry),
-      CategoryModel(name: 'Vegetables', image: AssetPaths.vegetables),
-      CategoryModel(name: 'Fresh Fruits', image: AssetPaths.fruits),
-      CategoryModel(name: 'Fresh Eggs', image: AssetPaths.egg),
-      CategoryModel(name: 'Soft Drinks', image: AssetPaths.beverages),
-      CategoryModel(name: 'Cleaning', image: AssetPaths.laundry),
-      CategoryModel(name: 'Green Veggies', image: AssetPaths.vegetables),
-      CategoryModel(name: 'Organic Fruits', image: AssetPaths.fruits),
-      CategoryModel(name: 'Farm Eggs', image: AssetPaths.egg),
-      CategoryModel(name: 'Cold Drinks', image: AssetPaths.beverages),
-      CategoryModel(name: 'Home Care', image: AssetPaths.laundry),
+      CategoryModel(id: '1', name: 'Fruits', image: AssetPaths.fruits),
+      CategoryModel(id: '2', name: 'Milk & Egg', image: AssetPaths.egg),
+      CategoryModel(id: '3', name: 'Beverages', image: AssetPaths.beverages),
+      CategoryModel(id: '4', name: 'Laundry', image: AssetPaths.laundry),
+      CategoryModel(id: '5', name: 'Vegetables', image: AssetPaths.vegetables),
+      CategoryModel(id: '6', name: 'Fresh Fruits', image: AssetPaths.fruits),
+      CategoryModel(id: '7', name: 'Fresh Eggs', image: AssetPaths.egg),
+      CategoryModel(id: '8', name: 'Soft Drinks', image: AssetPaths.beverages),
+      CategoryModel(id: '9', name: 'Cleaning', image: AssetPaths.laundry),
+      CategoryModel(
+        id: '10',
+        name: 'Green Veggies',
+        image: AssetPaths.vegetables,
+      ),
+      CategoryModel(id: '11', name: 'Organic Fruits', image: AssetPaths.fruits),
+      CategoryModel(id: '12', name: 'Farm Eggs', image: AssetPaths.egg),
+      CategoryModel(id: '13', name: 'Cold Drinks', image: AssetPaths.beverages),
+      CategoryModel(id: '14', name: 'Home Care', image: AssetPaths.laundry),
     ];
   }
 

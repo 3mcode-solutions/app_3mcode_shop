@@ -160,6 +160,7 @@ class WooCommerceService {
     int? page,
     int? perPage,
     String? category,
+    String? categoryId,
     String? search,
   }) async {
     final queryParams = <String, String>{};
@@ -167,6 +168,7 @@ class WooCommerceService {
     if (page != null) queryParams['page'] = page.toString();
     if (perPage != null) queryParams['per_page'] = perPage.toString();
     if (category != null) queryParams['category'] = category;
+    if (categoryId != null) queryParams['category_id'] = categoryId;
     if (search != null) queryParams['search'] = search;
 
     final response = await get('products', queryParams);

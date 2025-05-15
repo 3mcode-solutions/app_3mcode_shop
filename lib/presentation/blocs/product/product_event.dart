@@ -27,7 +27,7 @@ class SearchProducts extends ProductEvent {
   List<Object> get props => [query];
 }
 
-/// Event to load products by category
+/// Event to load products by category name
 class LoadProductsByCategory extends ProductEvent {
   final String categoryName;
 
@@ -35,6 +35,16 @@ class LoadProductsByCategory extends ProductEvent {
 
   @override
   List<Object> get props => [categoryName];
+}
+
+/// Event to load products by category ID
+class LoadProductsByCategoryId extends ProductEvent {
+  final String categoryId;
+
+  const LoadProductsByCategoryId(this.categoryId);
+
+  @override
+  List<Object> get props => [categoryId];
 }
 
 /// Event to filter products by various criteria

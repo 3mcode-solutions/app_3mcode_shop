@@ -42,14 +42,20 @@ class FeaturedProductsLoaded extends ProductState {
 class ProductsByCategoryLoaded extends ProductState {
   final List<ProductModel> products;
   final String categoryName;
+  final String? categoryId;
 
   const ProductsByCategoryLoaded({
     required this.products,
-    required this.categoryName,
+    this.categoryName = '',
+    this.categoryId,
   });
 
   @override
-  List<Object> get props => [products, categoryName];
+  List<Object> get props => [
+    products,
+    categoryName,
+    if (categoryId != null) categoryId!,
+  ];
 }
 
 /// State when search results have been loaded

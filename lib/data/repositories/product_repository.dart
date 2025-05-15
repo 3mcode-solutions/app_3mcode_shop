@@ -288,4 +288,40 @@ class ProductRepository {
           .toList();
     }
   }
+
+  /// Get products by category ID
+  ///
+  /// Returns products that belong to the specified category ID
+  Future<List<ProductModel>> getProductsByCategoryId(String categoryId) async {
+    try {
+      // Check internet connection
+      final connectivityResult = await Connectivity().checkConnectivity();
+      final bool hasInternet = connectivityResult != ConnectivityResult.none;
+
+      if (hasInternet) {
+        // Get products by category ID using WooCommerce API
+        final wooProducts = await _wooCommerceService.getProducts(
+          categoryId: categoryId,
+        );
+
+        // Convert to app models
+        return wooProducts
+            .map(
+              (product) => ProductModel.fromWooProduct(product as WooProduct),
+            )
+            .toList();
+      } else {
+        // Filter local data if offline
+        final products = await _getLocalProducts();
+
+        // In offline mode, we don't have category IDs in the local data
+        // So we'll return an empty list or all products depending on the use case
+        return products;
+      }
+    } catch (e) {
+      debugPrint('❌ Error getting products by category ID: $e');
+      // Fallback to all products in case of error
+      return await _getLocalProducts();
+    }
+  }
 }
