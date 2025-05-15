@@ -4,13 +4,7 @@ import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
 import 'package:app_3mcode_shop/data/models/payment_method_model.dart';
 
 /// Enum representing different order statuses
-enum OrderStatus {
-  pending,
-  processing,
-  shipped,
-  delivered,
-  cancelled,
-}
+enum OrderStatus { pending, processing, shipped, delivered, cancelled }
 
 /// A model class representing an order
 class OrderModel extends Equatable {
@@ -48,19 +42,19 @@ class OrderModel extends Equatable {
 
   @override
   List<Object?> get props => [
-    id, 
-    items, 
-    shippingAddress, 
-    paymentMethod, 
-    subtotal, 
-    shippingFee, 
-    tax, 
+    id,
+    items,
+    shippingAddress,
+    paymentMethod,
+    subtotal,
+    shippingFee,
+    tax,
     total,
     status,
     createdAt,
     updatedAt,
   ];
-  
+
   // Create a copy of this OrderModel with the given fields replaced
   OrderModel copyWith({
     String? id,
@@ -89,17 +83,17 @@ class OrderModel extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
-  
+
   // Get formatted date
   String get formattedDate {
     return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
   }
-  
+
   // Get formatted time
   String get formattedTime {
     return '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
   }
-  
+
   // Get status text
   String get statusText {
     switch (status) {
@@ -117,9 +111,55 @@ class OrderModel extends Equatable {
         return 'Unknown';
     }
   }
-  
+
   // Get total number of items
   int get totalItems {
     return items.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  // Convert OrderModel to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'items': items.map((item) => item.toJson()).toList(),
+      'shippingAddress': shippingAddress.toJson(),
+      'paymentMethod': paymentMethod.toJson(),
+      'subtotal': subtotal,
+      'shippingFee': shippingFee,
+      'tax': tax,
+      'total': total,
+      'status': status.index,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+    };
+  }
+
+  // Create OrderModel from JSON
+  factory OrderModel.fromJson(Map<String, dynamic> json) {
+    return OrderModel(
+      id: json['id'] as String,
+      items:
+          (json['items'] as List<dynamic>)
+              .map(
+                (item) => CartItemModel.fromJson(item as Map<String, dynamic>),
+              )
+              .toList(),
+      shippingAddress: AddressModel.fromJson(
+        json['shippingAddress'] as Map<String, dynamic>,
+      ),
+      paymentMethod: PaymentMethodModel.fromJson(
+        json['paymentMethod'] as Map<String, dynamic>,
+      ),
+      subtotal: json['subtotal'] as double,
+      shippingFee: json['shippingFee'] as double,
+      tax: json['tax'] as double,
+      total: json['total'] as double,
+      status: OrderStatus.values[json['status'] as int],
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt:
+          json['updatedAt'] != null
+              ? DateTime.parse(json['updatedAt'] as String)
+              : null,
+    );
   }
 }

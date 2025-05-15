@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/data/models/address_model.dart';
+import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
 import 'package:app_3mcode_shop/data/models/order_model.dart';
 import 'package:app_3mcode_shop/data/models/payment_method_model.dart';
+import 'package:app_3mcode_shop/data/services/order_sync_service.dart';
+import 'package:app_3mcode_shop/data/services/woo_checkout_service.dart';
 import 'package:app_3mcode_shop/presentation/blocs/cart/cart_bloc.dart';
 import 'package:app_3mcode_shop/presentation/blocs/cart/cart_state.dart';
 import 'package:app_3mcode_shop/presentation/blocs/cart/cart_event.dart';
@@ -12,6 +15,7 @@ import 'package:app_3mcode_shop/presentation/screens/checkout/order_confirmation
 import 'package:app_3mcode_shop/presentation/widgets/custom_app_bar.dart';
 import 'package:app_3mcode_shop/presentation/widgets/animated_button.dart';
 import 'package:app_3mcode_shop/presentation/widgets/animated_toast.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class PaymentScreen extends StatefulWidget {
   final AddressModel address;
@@ -299,46 +303,186 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
   }
 
-  void _completeOrder() {
+  void _completeOrder() async {
+    if (!mounted) return;
+
     try {
       final cartState = context.read<CartBloc>().state;
       if (cartState is CartLoaded) {
-        // Create order
-        final order = OrderModel(
-          id: 'ORD-${DateTime.now().millisecondsSinceEpoch}',
-          items: cartState.items,
-          shippingAddress: widget.address,
-          paymentMethod: widget.paymentMethod,
-          subtotal: cartState.items.fold(
-            0.0,
-            (sum, item) => sum + item.totalDiscountedPrice,
-          ),
-          shippingFee: 5.99,
-          tax:
-              cartState.items.fold(
-                0.0,
-                (sum, item) => sum + item.totalDiscountedPrice,
-              ) *
-              0.05,
-          total: widget.total,
+        final subtotal = cartState.items.fold(
+          0.0,
+          (sum, item) => sum + item.totalDiscountedPrice,
         );
+        final shippingFee = 5.99;
+        final tax = subtotal * 0.05;
+        final cartItems = List<CartItemModel>.from(
+          cartState.items,
+        ); // Create a copy of cart items
+        final cartBloc = context.read<CartBloc>(); // Get bloc reference
 
-        // Clear cart
-        context.read<CartBloc>().add(const ClearCart());
+        // Check internet connection
+        final connectivityResult = await Connectivity().checkConnectivity();
+        final bool hasInternet = connectivityResult != ConnectivityResult.none;
 
-        // Navigate to confirmation screen
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => BlocProvider.value(
-                  value: BlocProvider.of<CartBloc>(context),
-                  child: OrderConfirmationScreen(order: order),
-                ),
-          ),
-          (route) => false,
-        );
+        // Create services
+        final wooCheckoutService = WooCheckoutService();
+        final orderSyncService = OrderSyncService();
+
+        if (hasInternet) {
+          try {
+            // Show processing message
+            if (!mounted) return;
+            AnimatedToast.show(
+              context: context,
+              message: 'Creating your order...',
+              type: ToastType.info,
+            );
+
+            // Create order in WooCommerce
+            final wooOrder = await wooCheckoutService.createOrder(
+              items: cartItems,
+              shippingAddress: widget.address,
+              paymentMethod: widget.paymentMethod,
+              subtotal: subtotal,
+              shippingFee: shippingFee,
+              tax: tax,
+              total: widget.total,
+            );
+
+            // Process payment
+            final paymentSuccess = await wooCheckoutService.processPayment(
+              orderId: wooOrder['id'].toString(),
+              paymentMethod: widget.paymentMethod,
+              amount: widget.total,
+            );
+
+            if (!paymentSuccess) {
+              throw Exception('Payment processing failed');
+            }
+
+            // Create local order model
+            final order = OrderModel(
+              id: 'ORD-${wooOrder['id']}',
+              items: cartItems,
+              shippingAddress: widget.address,
+              paymentMethod: widget.paymentMethod,
+              subtotal: subtotal,
+              shippingFee: shippingFee,
+              tax: tax,
+              total: widget.total,
+            );
+
+            // Check if widget is still mounted
+            if (!mounted) return;
+
+            // Clear cart
+            cartBloc.add(const ClearCart());
+
+            // Navigate to confirmation screen
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => BlocProvider.value(
+                      value: cartBloc,
+                      child: OrderConfirmationScreen(order: order),
+                    ),
+              ),
+              (route) => false,
+            );
+          } catch (apiError) {
+            debugPrint('❌ WooCommerce API error: $apiError');
+
+            // Check if widget is still mounted
+            if (!mounted) return;
+
+            // Fallback to local order if API fails
+            AnimatedToast.show(
+              context: context,
+              message: 'Using offline mode for checkout',
+              type: ToastType.warning,
+            );
+
+            // Create local order model with offline ID
+            final order = OrderModel(
+              id: 'ORD-OFFLINE-${DateTime.now().millisecondsSinceEpoch}',
+              items: cartItems,
+              shippingAddress: widget.address,
+              paymentMethod: widget.paymentMethod,
+              subtotal: subtotal,
+              shippingFee: shippingFee,
+              tax: tax,
+              total: widget.total,
+            );
+
+            // Add to pending orders for later sync
+            await orderSyncService.addPendingOrder(order);
+
+            // Clear cart
+            cartBloc.add(const ClearCart());
+
+            // Check if widget is still mounted before navigation
+            if (!mounted) return;
+
+            // Navigate to confirmation screen
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => BlocProvider.value(
+                      value: cartBloc,
+                      child: OrderConfirmationScreen(order: order),
+                    ),
+              ),
+              (route) => false,
+            );
+          }
+        } else {
+          // Offline mode
+          if (!mounted) return;
+
+          AnimatedToast.show(
+            context: context,
+            message: 'Using offline mode for checkout',
+            type: ToastType.warning,
+          );
+
+          // Create local order model with offline ID
+          final order = OrderModel(
+            id: 'ORD-OFFLINE-${DateTime.now().millisecondsSinceEpoch}',
+            items: cartItems,
+            shippingAddress: widget.address,
+            paymentMethod: widget.paymentMethod,
+            subtotal: subtotal,
+            shippingFee: shippingFee,
+            tax: tax,
+            total: widget.total,
+          );
+
+          // Add to pending orders for later sync
+          await orderSyncService.addPendingOrder(order);
+
+          // Clear cart
+          cartBloc.add(const ClearCart());
+
+          // Check if widget is still mounted before navigation
+          if (!mounted) return;
+
+          // Navigate to confirmation screen
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => BlocProvider.value(
+                    value: cartBloc,
+                    child: OrderConfirmationScreen(order: order),
+                  ),
+            ),
+            (route) => false,
+          );
+        }
       } else {
+        if (!mounted) return;
         AnimatedToast.show(
           context: context,
           message: 'Error: Cart data not available',
@@ -346,6 +490,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       AnimatedToast.show(
         context: context,
         message: 'Error: ${e.toString()}',

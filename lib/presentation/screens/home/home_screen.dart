@@ -9,6 +9,7 @@ import 'package:app_3mcode_shop/core/localization/app_localizations.dart';
 import 'package:app_3mcode_shop/data/datasources/local/local_data.dart';
 import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
 import 'package:app_3mcode_shop/data/models/product_model.dart';
+import 'package:app_3mcode_shop/data/repositories/product_repository.dart';
 import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
 import 'package:app_3mcode_shop/presentation/screens/cart/cart_screen.dart';
 import 'package:app_3mcode_shop/presentation/screens/auth/login_screen.dart';
@@ -17,6 +18,8 @@ import 'package:app_3mcode_shop/presentation/screens/favorite/favorites_screen.d
 import 'package:app_3mcode_shop/presentation/widgets/widgets.dart';
 import 'package:app_3mcode_shop/presentation/screens/product/product_detail_screen.dart';
 import 'package:app_3mcode_shop/presentation/screens/product/product_list_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/settings/theme_settings_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/woo_products_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -260,7 +263,45 @@ class _HomeScreenState extends State<HomeScreen> {
             title: const Text('الإعدادات'),
             onTap: () {
               Navigator.pop(context);
-              // يمكن إضافة التنقل إلى صفحة الإعدادات هنا
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ThemeSettingsScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.shopping_bag),
+            title: const Text('منتجات WooCommerce'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const WooProductsScreen(),
+                ),
+              );
+            },
+          ),
+          BlocBuilder<ThemeBloc, ThemeState>(
+            builder: (context, state) {
+              final isDarkMode =
+                  state is ThemeLoaded ? state.isDarkMode : false;
+              return ListTile(
+                leading: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+                title: Text(isDarkMode ? 'الوضع الفاتح' : 'الوضع الداكن'),
+                trailing: Switch(
+                  value: isDarkMode,
+                  activeColor: AppColors.primary,
+                  onChanged: (value) {
+                    context.read<ThemeBloc>().add(const ToggleTheme());
+                  },
+                ),
+                onTap: () {
+                  context.read<ThemeBloc>().add(const ToggleTheme());
+                },
+              );
             },
           ),
           BlocBuilder<AuthBloc, AuthState>(
@@ -986,6 +1027,166 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: _buildProductHorizontalList(
                   context: context,
                   products: LocalData.getDiscoverMoreProducts(),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // WooCommerce Products
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'WooCommerce Products',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const WooProductsScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        AppLocalizations.of(context).translate('see_all'),
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // WooCommerce Products Preview
+              SizedBox(
+                height: 250,
+                child: FutureBuilder<List<ProductModel>>(
+                  future: ProductRepository().getProducts(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Error: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No products found'));
+                    } else {
+                      final products = snapshot.data!;
+                      return BlocBuilder<CartBloc, CartState>(
+                        builder: (context, cartState) {
+                          return ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            itemCount:
+                                products.length > 10 ? 10 : products.length,
+                            itemBuilder: (context, index) {
+                              final product = products[index];
+                              bool isInCart = false;
+
+                              if (cartState is CartLoaded) {
+                                isInCart = cartState.items.any(
+                                  (item) => item.product.id == product.id,
+                                );
+                              }
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                child: BlocBuilder<FavoriteBloc, FavoriteState>(
+                                  builder: (context, favoriteState) {
+                                    bool isFavorite = false;
+
+                                    if (favoriteState is FavoriteLoaded) {
+                                      isFavorite = favoriteState.isFavorite(
+                                        product.id,
+                                      );
+                                    }
+
+                                    return ProductCard(
+                                      product: product,
+                                      isInCart: isInCart,
+                                      isFavorite: isFavorite,
+                                      quantity:
+                                          isInCart && cartState is CartLoaded
+                                              ? cartState.items
+                                                  .firstWhere(
+                                                    (item) =>
+                                                        item.product.id ==
+                                                        product.id,
+                                                    orElse:
+                                                        () => CartItemModel(
+                                                          product: product,
+                                                        ),
+                                                  )
+                                                  .quantity
+                                              : 0,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) =>
+                                                    ProductDetailScreen(
+                                                      product: product,
+                                                    ),
+                                          ),
+                                        );
+                                      },
+                                      onAddToCart: () {
+                                        if (!isInCart) {
+                                          context.read<CartBloc>().add(
+                                            AddToCart(product),
+                                          );
+                                        }
+                                      },
+                                      onIncrement:
+                                          isInCart
+                                              ? () {
+                                                context.read<CartBloc>().add(
+                                                  IncrementCartItemQuantity(
+                                                    product,
+                                                  ),
+                                                );
+                                              }
+                                              : null,
+                                      onDecrement:
+                                          isInCart
+                                              ? () {
+                                                context.read<CartBloc>().add(
+                                                  DecrementCartItemQuantity(
+                                                    product,
+                                                  ),
+                                                );
+                                              }
+                                              : null,
+                                      onToggleFavorite: () {
+                                        context.read<FavoriteBloc>().add(
+                                          ToggleFavorite(product.id),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    }
+                  },
                 ),
               ),
 

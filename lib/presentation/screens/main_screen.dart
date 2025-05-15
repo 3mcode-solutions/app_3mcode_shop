@@ -22,6 +22,7 @@ class _MainScreenState extends State<MainScreen> {
     const FavoritesScreen(),
     const OrdersScreen(),
     const AccountScreen(),
+    const WooProductsScreen(), // Added WooCommerce products screen
   ];
 
   @override
@@ -103,6 +104,10 @@ class _MainScreenState extends State<MainScreen> {
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.person),
                   label: AppLocalizations.of(context).translate('account'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.shopping_bag),
+                  label: 'WooCommerce',
                 ),
               ],
             );

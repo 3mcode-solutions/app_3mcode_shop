@@ -59,6 +59,14 @@ dependencies:
   flutter_map: ^5.0.0
   latlong2: ^0.9.0
 
+  # WooCommerce integration
+  dio: ^5.4.0
+  cached_network_image: ^3.3.1
+  connectivity_plus: ^5.0.2
+  flutter_secure_storage: ^9.0.0
+  flutter_dotenv: ^5.1.0
+  crypto: ^3.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -92,6 +100,7 @@ flutter:
     - assets/icons/
     - assets/lang/
     - assets/maps/
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -29,16 +29,16 @@ class AddressModel extends Equatable {
 
   @override
   List<Object> get props => [
-    fullName, 
-    phoneNumber, 
-    addressLine1, 
-    addressLine2, 
-    city, 
-    state, 
+    fullName,
+    phoneNumber,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
     zipCode,
     isDefault,
   ];
-  
+
   // Create a copy of this AddressModel with the given fields replaced
   AddressModel copyWith({
     String? fullName,
@@ -61,20 +61,48 @@ class AddressModel extends Equatable {
       isDefault: isDefault ?? this.isDefault,
     );
   }
-  
+
   // Format the address as a single string
   String get formattedAddress {
     final buffer = StringBuffer();
     buffer.write(addressLine1);
-    
+
     if (addressLine2.isNotEmpty) {
       buffer.write(', $addressLine2');
     }
-    
+
     buffer.write(', $city');
     buffer.write(', $state');
     buffer.write(' $zipCode');
-    
+
     return buffer.toString();
+  }
+
+  // Convert AddressModel to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'fullName': fullName,
+      'phoneNumber': phoneNumber,
+      'addressLine1': addressLine1,
+      'addressLine2': addressLine2,
+      'city': city,
+      'state': state,
+      'zipCode': zipCode,
+      'isDefault': isDefault,
+    };
+  }
+
+  // Create AddressModel from JSON
+  factory AddressModel.fromJson(Map<String, dynamic> json) {
+    return AddressModel(
+      fullName: json['fullName'] as String,
+      phoneNumber: json['phoneNumber'] as String,
+      addressLine1: json['addressLine1'] as String,
+      addressLine2: json['addressLine2'] as String? ?? '',
+      city: json['city'] as String,
+      state: json['state'] as String,
+      zipCode: json['zipCode'] as String,
+      isDefault: json['isDefault'] as bool? ?? false,
+    );
   }
 }

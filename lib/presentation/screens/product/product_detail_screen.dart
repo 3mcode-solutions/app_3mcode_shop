@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app_3mcode_shop/colors.dart'; // TODO: Replace with AppTheme in the future
 import 'package:app_3mcode_shop/data/models/models.dart';
 import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
@@ -109,10 +110,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     color: Colors.grey.shade100,
                     child: Hero(
                       tag: 'product_image_${widget.product.name}',
-                      child: Image.asset(
-                        widget.product.image,
-                        fit: BoxFit.contain,
-                      ),
+                      child:
+                          widget.product.image.startsWith('http')
+                              ? CachedNetworkImage(
+                                imageUrl: widget.product.image,
+                                fit: BoxFit.contain,
+                                placeholder:
+                                    (context, url) => const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                errorWidget:
+                                    (context, url, error) =>
+                                        const Center(child: Icon(Icons.error)),
+                              )
+                              : Image.asset(
+                                widget.product.image,
+                                fit: BoxFit.contain,
+                              ),
                     ),
                   ),
 

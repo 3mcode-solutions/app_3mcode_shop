@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app_3mcode_shop/colors.dart';
 import 'package:app_3mcode_shop/data/models/product_model.dart';
 import 'package:app_3mcode_shop/data/models/cart_item_model.dart';
@@ -118,14 +119,28 @@ class ProductCard extends StatelessWidget {
                     width: 140,
                     height: 120,
                     padding: const EdgeInsets.all(10),
-                    child: Image.asset(
-                      product.image,
-                      width: 120,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(child: Icon(Icons.error));
-                      },
-                    ),
+                    child:
+                        product.image.startsWith('http')
+                            ? CachedNetworkImage(
+                              imageUrl: product.image,
+                              width: 120,
+                              fit: BoxFit.cover,
+                              placeholder:
+                                  (context, url) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                              errorWidget:
+                                  (context, url, error) =>
+                                      const Center(child: Icon(Icons.error)),
+                            )
+                            : Image.asset(
+                              product.image,
+                              width: 120,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(child: Icon(Icons.error));
+                              },
+                            ),
                   ),
                   // زر المفضلة
                   Positioned(
