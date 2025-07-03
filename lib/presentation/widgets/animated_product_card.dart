@@ -41,17 +41,11 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
     );
 
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutBack,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeIn,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
     // Start animation when widget is built
@@ -71,10 +65,7 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
-          child: Opacity(
-            opacity: _opacityAnimation.value,
-            child: _buildCard(),
-          ),
+          child: Opacity(opacity: _opacityAnimation.value, child: _buildCard()),
         );
       },
     );
@@ -111,44 +102,35 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
                   child: SizedBox(
                     height: 150,
                     width: double.infinity,
-                    child: widget.product.image.startsWith('http')
-                        ? CachedNetworkImage(
-                            imageUrl: widget.product.image,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const Center(
-                              child: CircularProgressIndicator(),
+                    child:
+                        widget.product.image.startsWith('http')
+                            ? CachedNetworkImage(
+                              imageUrl: widget.product.image,
+                              fit: BoxFit.cover,
+                              placeholder:
+                                  (context, url) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                              errorWidget:
+                                  (context, url, error) =>
+                                      const Center(child: Icon(Icons.error)),
+                            )
+                            : Image.asset(
+                              widget.product.image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(child: Icon(Icons.error));
+                              },
                             ),
-                            errorWidget: (context, url, error) =>
-                                const Center(child: Icon(Icons.error)),
-                          )
-                        : Image.asset(
-                            widget.product.image,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(child: Icon(Icons.error));
-                            },
-                          ),
                   ),
                 ),
                 // Favorite button
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: _buildFavoriteButton(),
-                ),
+                Positioned(top: 8, right: 8, child: _buildFavoriteButton()),
                 // Cart button
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: _buildCartButton(),
-                ),
+                Positioned(bottom: 8, right: 8, child: _buildCartButton()),
                 // Discount badge
                 if (widget.product.isOnSale)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: _buildDiscountBadge(),
-                  ),
+                  Positioned(top: 8, left: 8, child: _buildDiscountBadge()),
               ],
             ),
             // Product details
@@ -176,15 +158,16 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: widget.product.isOnSale
-                              ? Colors.red
-                              : AppColors.primary,
+                          color:
+                              widget.product.isOnSale
+                                  ? Colors.red
+                                  : AppColors.primary,
                         ),
                       ),
                       if (widget.product.isOnSale) ...[
                         const SizedBox(width: 8),
                         Text(
-                          '\$${widget.product.regularPrice}',
+                          '\$${(double.parse(widget.product.price) * 1.25).toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 14,
                             decoration: TextDecoration.lineThrough,
@@ -198,11 +181,7 @@ class _AnimatedProductCardState extends State<AnimatedProductCard>
                   // Rating
                   Row(
                     children: [
-                      const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                        size: 16,
-                      ),
+                      const Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         widget.product.rate,

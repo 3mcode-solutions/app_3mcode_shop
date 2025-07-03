@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -20,1358 +22,626 @@ import 'package:app_3mcode_shop/presentation/screens/product/product_detail_scre
 import 'package:app_3mcode_shop/presentation/screens/product/product_list_screen.dart';
 import 'package:app_3mcode_shop/presentation/screens/settings/theme_settings_screen.dart';
 import 'package:app_3mcode_shop/presentation/screens/woo_products_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/courses/courses_screen.dart';
+import 'package:app_3mcode_shop/presentation/screens/courses/course_details_screen.dart';
+import 'package:app_3mcode_shop/presentation/blocs/course/course.dart';
+import 'package:app_3mcode_shop/core/constants/app_constants.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> banners = LocalData.getBanners();
+  final GlobalKey _repaintKey = GlobalKey();
 
-  @override
-  void initState() {
-    super.initState();
-    // Load products and categories when screen initializes
-    context.read<ProductBloc>().add(const LoadProducts());
-    context.read<CategoryBloc>().add(const LoadCategories());
-  }
+  Future<void> _saveScreenshot() async {
+    try {
+      RenderRepaintBoundary boundary =
+          _repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-  Widget _buildUserAvatar(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        final isAuthenticated = state is Authenticated;
-        final user = isAuthenticated ? state.user : null;
+      final directory = await getApplicationDocumentsDirectory();
+      final screenshotsDir = Directory('${directory.path}/screenshots');
+      if (!screenshotsDir.existsSync()) {
+        screenshotsDir.createSync(recursive: true);
+      }
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final file = File('${screenshotsDir.path}/screenshot_$timestamp.png');
+      await file.writeAsBytes(pngBytes);
 
-        return GestureDetector(
-          onTap: () {
-            if (isAuthenticated && user != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProfileScreen(user: user),
-                ),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            }
-          },
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: Colors.grey.shade200,
-            backgroundImage:
-                isAuthenticated && user != null && user.photoUrl != null
-                    ? _getProfileImage(user.photoUrl!)
-                    : null,
-            child:
-                (isAuthenticated && user != null && user.photoUrl != null)
-                    ? null
-                    : Icon(
-                      Icons.person,
-                      size: 20,
-                      color: isAuthenticated ? AppColors.primary : Colors.grey,
-                    ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCartIcon(BuildContext context) {
-    return BlocBuilder<CartBloc, CartState>(
-      builder: (context, state) {
-        int itemCount = 0;
-
-        if (state is CartLoaded) {
-          itemCount = state.items.length;
-        }
-
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CartScreen()),
-            );
-          },
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SvgPicture.asset(AssetPaths.basketIcon),
-              if (itemCount > 0)
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      itemCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFavoriteIcon(BuildContext context) {
-    return BlocBuilder<FavoriteBloc, FavoriteState>(
-      builder: (context, state) {
-        int favoriteCount = 0;
-
-        if (state is FavoriteLoaded) {
-          favoriteCount = state.favorites.length;
-        }
-
-        return AnimatedFavoriteIcon(
-          favoriteCount: favoriteCount,
-          onTap: () {
-            // حفظ مرجع للسياق الحالي
-            final currentContext = context;
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FavoritesScreen()),
-            ).then((_) {
-              // التحقق من أن السياق لا يزال صالحًا
-              if (currentContext.mounted) {
-                // عرض رسالة تأكيد بعد العودة من شاشة المفضلة
-                final localizations = AppLocalizations.of(currentContext);
-                ScaffoldMessenger.of(currentContext).showSnackBar(
-                  SnackBar(
-                    content: Text(localizations.translate('favorites_viewed')),
-                    duration: const Duration(seconds: 2),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: AppColors.primary,
-                    action: SnackBarAction(
-                      label: localizations.translate('ok'),
-                      textColor: Colors.white,
-                      onPressed: () {
-                        ScaffoldMessenger.of(
-                          currentContext,
-                        ).hideCurrentSnackBar();
-                      },
-                    ),
-                  ),
-                );
-              }
-            });
-          },
-        );
-      },
-    );
-  }
-
-  ImageProvider _getProfileImage(String photoUrl) {
-    if (photoUrl.startsWith('/')) {
-      return FileImage(File(photoUrl));
-    } else {
-      return NetworkImage(photoUrl);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تم حفظ صورة الشاشة في: ${file.path}')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ أثناء التقاط الصورة: $e')),
+      );
     }
-  }
-
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          _buildDrawerHeader(context),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('الصفحة الرئيسية'),
-            onTap: () {
-              Navigator.pop(context); // إغلاق القائمة الجانبية
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.category),
-            title: const Text('الفئات'),
-            onTap: () {
-              Navigator.pop(context);
-              // يمكن إضافة التنقل إلى صفحة الفئات هنا
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.favorite, color: Colors.red),
-            title: const Text('المفضلة'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const FavoritesScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.shopping_cart),
-            title: const Text('سلة التسوق'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CartScreen()),
-              );
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.account_circle),
-            title: const Text('حسابي'),
-            onTap: () {
-              Navigator.pop(context);
-              // التحقق مما إذا كان المستخدم مسجل دخول
-              final authState = context.read<AuthBloc>().state;
-              if (authState is Authenticated) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(user: authState.user),
-                  ),
-                );
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('الإعدادات'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ThemeSettingsScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.shopping_bag),
-            title: const Text('منتجات WooCommerce'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const WooProductsScreen(),
-                ),
-              );
-            },
-          ),
-          BlocBuilder<ThemeBloc, ThemeState>(
-            builder: (context, state) {
-              final isDarkMode =
-                  state is ThemeLoaded ? state.isDarkMode : false;
-              return ListTile(
-                leading: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
-                title: Text(isDarkMode ? 'الوضع الفاتح' : 'الوضع الداكن'),
-                trailing: Switch(
-                  value: isDarkMode,
-                  activeColor: AppColors.primary,
-                  onChanged: (value) {
-                    context.read<ThemeBloc>().add(const ToggleTheme());
-                  },
-                ),
-                onTap: () {
-                  context.read<ThemeBloc>().add(const ToggleTheme());
-                },
-              );
-            },
-          ),
-          BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, state) {
-              if (state is Authenticated) {
-                return ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text(
-                    'تسجيل الخروج',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // عرض مربع حوار للتأكيد
-                    showDialog(
-                      context: context,
-                      builder:
-                          (context) => AlertDialog(
-                            title: const Text('تسجيل الخروج'),
-                            content: const Text(
-                              'هل أنت متأكد أنك تريد تسجيل الخروج؟',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('إلغاء'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  context.read<AuthBloc>().add(
-                                    const LogoutUser(),
-                                  );
-                                },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                ),
-                                child: const Text('تسجيل الخروج'),
-                              ),
-                            ],
-                          ),
-                    );
-                  },
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawerHeader(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        final isAuthenticated = state is Authenticated;
-        final user = isAuthenticated ? state.user : null;
-
-        return DrawerHeader(
-          decoration: const BoxDecoration(color: AppColors.primary),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.white,
-                backgroundImage:
-                    isAuthenticated && user != null && user.photoUrl != null
-                        ? _getProfileImage(user.photoUrl!)
-                        : null,
-                child:
-                    (isAuthenticated && user != null && user.photoUrl != null)
-                        ? null
-                        : const Icon(
-                          Icons.person,
-                          size: 30,
-                          color: AppColors.primary,
-                        ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                isAuthenticated && user != null ? user.name : 'مرحبًا بك!',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                isAuthenticated && user != null
-                    ? user.email
-                    : 'تسجيل الدخول للوصول إلى جميع الميزات',
-                style: const TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: Builder(
-          builder:
-              (context) => IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              ),
-        ),
-        title: Row(
-          children: [
-            const Text(
-              "3M Shop",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-            const Spacer(),
-            _buildUserAvatar(context),
-            const SizedBox(width: 16),
-            _buildFavoriteIcon(context),
-            const SizedBox(width: 16),
-            _buildCartIcon(context),
-          ],
-        ),
-      ),
-      drawer: _buildDrawer(context),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          context.read<ProductBloc>().add(const LoadProducts());
-          context.read<CategoryBloc>().add(const LoadCategories());
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final localizations = AppLocalizations.of(context);
+    
+    return RepaintBoundary(
+      key: _repaintKey,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Row(
             children: [
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search products...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey.shade200,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                  ),
-                  onSubmitted: (query) {
-                    if (query.isNotEmpty) {
-                      context.read<ProductBloc>().add(SearchProducts(query));
-                      // Navigate to search results screen
-                      // This would be implemented in a real app
-                    }
-                  },
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: SvgPicture.asset(
+                  'assets/logo/logo.svg',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                  placeholderBuilder: (context) => const Icon(Icons.image, size: 40),
                 ),
               ),
-
-              // Banner slider
-              CarouselSlider(
-                options: CarouselOptions(
-                  height: 180,
-                  viewportFraction: 0.92,
-                  autoPlay: true,
-                  enlargeCenterPage: true,
-                  aspectRatio: 16 / 9,
-                  autoPlayCurve: Curves.fastOutSlowIn,
-                  enableInfiniteScroll: true,
-                  autoPlayAnimationDuration: const Duration(milliseconds: 800),
-                ),
-                items:
-                    banners.map((banner) {
-                      return Builder(
-                        builder: (BuildContext context) {
-                          return Container(
-                            width: MediaQuery.of(context).size.width,
-                            margin: const EdgeInsets.symmetric(horizontal: 5.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.asset(banner, fit: BoxFit.cover),
-                            ),
-                          );
-                        },
-                      );
-                    }).toList(),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Categories
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Categories',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              const SizedBox(width: 12),
+              Text(
+                '3M Code Solutions',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-
-              const SizedBox(height: 10),
-
-              SizedBox(
-                height: 100,
-                child: BlocBuilder<CategoryBloc, CategoryState>(
-                  builder: (context, state) {
-                    if (state is CategoryLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (state is CategoryLoaded) {
-                      return ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        itemCount: state.categories.length,
-                        itemBuilder: (context, index) {
-                          final category = state.categories[index];
-                          final isSelected =
-                              state.selectedCategory?.name == category.name;
-
-                          return CategoryItem(
-                            category: category,
-                            isSelected: isSelected,
-                            onTap: () {
-                              context.read<CategoryBloc>().add(
-                                SelectCategory(category.name),
-                              );
-                              // Load products by category ID for more accurate results
-                              context.read<ProductBloc>().add(
-                                LoadProductsByCategoryId(category.id),
-                              );
-
-                              // Show a snackbar to indicate loading products
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Loading products from category: ${category.name}',
-                                  ),
-                                  duration: const Duration(seconds: 2),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      );
-                    } else if (state is CategoryError) {
-                      return Center(child: Text('Error: ${state.message}'));
-                    } else {
-                      return const Center(child: Text('No categories found'));
-                    }
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Featured Products
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Featured Products',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              SizedBox(
-                height: 250,
-                child: BlocBuilder<ProductBloc, ProductState>(
-                  builder: (context, state) {
-                    if (state is ProductLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (state is ProductLoaded ||
-                        state is ProductsByCategoryLoaded) {
-                      final products =
-                          state is ProductLoaded
-                              ? state.products
-                              : (state as ProductsByCategoryLoaded).products;
-
-                      return BlocBuilder<CartBloc, CartState>(
-                        builder: (context, cartState) {
-                          return ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            itemCount: products.length,
-                            itemBuilder: (context, index) {
-                              final product = products[index];
-                              bool isInCart = false;
-
-                              if (cartState is CartLoaded) {
-                                isInCart = cartState.items.any(
-                                  (item) => item.product.name == product.name,
-                                );
-                              }
-
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
-                                ),
-                                child: BlocBuilder<FavoriteBloc, FavoriteState>(
-                                  builder: (context, favoriteState) {
-                                    bool isFavorite = false;
-
-                                    if (favoriteState is FavoriteLoaded) {
-                                      isFavorite = favoriteState.isFavorite(
-                                        product.id,
-                                      );
-                                    }
-
-                                    return ProductCard(
-                                      product: product,
-                                      isInCart: isInCart,
-                                      isFavorite: isFavorite,
-                                      quantity:
-                                          isInCart && cartState is CartLoaded
-                                              ? cartState.items
-                                                  .firstWhere(
-                                                    (item) =>
-                                                        item.product.name ==
-                                                        product.name,
-                                                    orElse:
-                                                        () => CartItemModel(
-                                                          product: product,
-                                                        ),
-                                                  )
-                                                  .quantity
-                                              : 0,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    ProductDetailScreen(
-                                                      product: product,
-                                                    ),
-                                          ),
-                                        );
-                                      },
-                                      onAddToCart: () {
-                                        if (!isInCart) {
-                                          context.read<CartBloc>().add(
-                                            AddToCart(product),
-                                          );
-                                        }
-                                      },
-                                      onIncrement:
-                                          isInCart
-                                              ? () {
-                                                context.read<CartBloc>().add(
-                                                  IncrementCartItemQuantity(
-                                                    product,
-                                                  ),
-                                                );
-                                              }
-                                              : null,
-                                      onDecrement:
-                                          isInCart
-                                              ? () {
-                                                context.read<CartBloc>().add(
-                                                  DecrementCartItemQuantity(
-                                                    product,
-                                                  ),
-                                                );
-                                              }
-                                              : null,
-                                      onToggleFavorite: () {
-                                        context.read<FavoriteBloc>().add(
-                                          ToggleFavorite(product.id),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      );
-                    } else if (state is ProductError) {
-                      return Center(child: Text('Error: ${state.message}'));
-                    } else {
-                      return const Center(child: Text('No products found'));
-                    }
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Popular Products
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Popular Products',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              BlocBuilder<ProductBloc, ProductState>(
-                builder: (context, state) {
-                  if (state is ProductLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is ProductLoaded) {
-                    // For demo purposes, just show the same products in a grid
-                    final popularProducts = state.products.take(6).toList();
-
-                    return BlocBuilder<CartBloc, CartState>(
-                      builder: (context, cartState) {
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 0.7,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 10,
-                              ),
-                          itemCount: popularProducts.length,
-                          itemBuilder: (context, index) {
-                            final product = popularProducts[index];
-                            bool isInCart = false;
-
-                            if (cartState is CartLoaded) {
-                              isInCart = cartState.items.any(
-                                (item) => item.product.name == product.name,
-                              );
-                            }
-
-                            return BlocBuilder<FavoriteBloc, FavoriteState>(
-                              builder: (context, favoriteState) {
-                                bool isFavorite = false;
-
-                                if (favoriteState is FavoriteLoaded) {
-                                  isFavorite = favoriteState.isFavorite(
-                                    product.id,
-                                  );
-                                }
-
-                                return ProductCard(
-                                  product: product,
-                                  isInCart: isInCart,
-                                  isFavorite: isFavorite,
-                                  quantity:
-                                      isInCart && cartState is CartLoaded
-                                          ? cartState.items
-                                              .firstWhere(
-                                                (item) =>
-                                                    item.product.name ==
-                                                    product.name,
-                                                orElse:
-                                                    () => CartItemModel(
-                                                      product: product,
-                                                    ),
-                                              )
-                                              .quantity
-                                          : 0,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => ProductDetailScreen(
-                                              product: product,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  onAddToCart: () {
-                                    if (!isInCart) {
-                                      context.read<CartBloc>().add(
-                                        AddToCart(product),
-                                      );
-                                    }
-                                  },
-                                  onIncrement:
-                                      isInCart
-                                          ? () {
-                                            context.read<CartBloc>().add(
-                                              IncrementCartItemQuantity(
-                                                product,
-                                              ),
-                                            );
-                                          }
-                                          : null,
-                                  onDecrement:
-                                      isInCart
-                                          ? () {
-                                            context.read<CartBloc>().add(
-                                              DecrementCartItemQuantity(
-                                                product,
-                                              ),
-                                            );
-                                          }
-                                          : null,
-                                  onToggleFavorite: () {
-                                    context.read<FavoriteBloc>().add(
-                                      ToggleFavorite(product.id),
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          },
-                        );
-                      },
-                    );
-                  } else if (state is ProductError) {
-                    return Center(child: Text('Error: ${state.message}'));
-                  } else {
-                    return const Center(child: Text('No products found'));
-                  }
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              // منتجات مخفضة
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      AppLocalizations.of(
-                        context,
-                      ).translate('discounted_products'),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => ProductListScreen(
-                                  title: AppLocalizations.of(
-                                    context,
-                                  ).translate('discounted_products'),
-                                  products: LocalData.getDiscountedProducts(),
-                                  type: ProductListType.discounted,
-                                ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        AppLocalizations.of(context).translate('see_all'),
-                        style: TextStyle(color: AppColors.primary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              SizedBox(
-                height: 250,
-                child: _buildProductHorizontalList(
-                  context: context,
-                  products: LocalData.getDiscountedProducts(),
-                  showDiscountBadge: true,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // الأكثر مبيعًا
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).translate('best_selling'),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => ProductListScreen(
-                                  title: AppLocalizations.of(
-                                    context,
-                                  ).translate('best_selling'),
-                                  products: LocalData.getBestSellingProducts(),
-                                  type: ProductListType.bestSelling,
-                                ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        AppLocalizations.of(context).translate('see_all'),
-                        style: TextStyle(color: AppColors.primary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              SizedBox(
-                height: 250,
-                child: _buildProductHorizontalList(
-                  context: context,
-                  products: LocalData.getBestSellingProducts(),
-                  showBestSellerBadge: true,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // منتجات موسمية
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      AppLocalizations.of(
-                        context,
-                      ).translate('seasonal_products'),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => ProductListScreen(
-                                  title: AppLocalizations.of(
-                                    context,
-                                  ).translate('seasonal_products'),
-                                  products: LocalData.getSeasonalProducts(),
-                                  type: ProductListType.seasonal,
-                                ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        AppLocalizations.of(context).translate('see_all'),
-                        style: TextStyle(color: AppColors.primary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              SizedBox(
-                height: 250,
-                child: _buildProductHorizontalList(
-                  context: context,
-                  products: LocalData.getSeasonalProducts(),
-                  showSeasonalBadge: true,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // اكتشف المزيد
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).translate('discover_more'),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => ProductListScreen(
-                                  title: AppLocalizations.of(
-                                    context,
-                                  ).translate('discover_more'),
-                                  products: LocalData.getDiscoverMoreProducts(),
-                                  type: ProductListType.discoverMore,
-                                ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        AppLocalizations.of(context).translate('see_all'),
-                        style: TextStyle(color: AppColors.primary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              SizedBox(
-                height: 250,
-                child: _buildProductHorizontalList(
-                  context: context,
-                  products: LocalData.getDiscoverMoreProducts(),
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              // WooCommerce Products
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'WooCommerce Products',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const WooProductsScreen(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        AppLocalizations.of(context).translate('see_all'),
-                        style: TextStyle(color: AppColors.primary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // WooCommerce Products Preview
-              SizedBox(
-                height: 250,
-                child: FutureBuilder<List<ProductModel>>(
-                  future: ProductRepository().getProducts(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(
-                        child: Text(
-                          'Error: ${snapshot.error}',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      );
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No products found'));
-                    } else {
-                      final products = snapshot.data!;
-                      return BlocBuilder<CartBloc, CartState>(
-                        builder: (context, cartState) {
-                          return ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            itemCount:
-                                products.length > 10 ? 10 : products.length,
-                            itemBuilder: (context, index) {
-                              final product = products[index];
-                              bool isInCart = false;
-
-                              if (cartState is CartLoaded) {
-                                isInCart = cartState.items.any(
-                                  (item) => item.product.id == product.id,
-                                );
-                              }
-
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
-                                ),
-                                child: BlocBuilder<FavoriteBloc, FavoriteState>(
-                                  builder: (context, favoriteState) {
-                                    bool isFavorite = false;
-
-                                    if (favoriteState is FavoriteLoaded) {
-                                      isFavorite = favoriteState.isFavorite(
-                                        product.id,
-                                      );
-                                    }
-
-                                    return ProductCard(
-                                      product: product,
-                                      isInCart: isInCart,
-                                      isFavorite: isFavorite,
-                                      quantity:
-                                          isInCart && cartState is CartLoaded
-                                              ? cartState.items
-                                                  .firstWhere(
-                                                    (item) =>
-                                                        item.product.id ==
-                                                        product.id,
-                                                    orElse:
-                                                        () => CartItemModel(
-                                                          product: product,
-                                                        ),
-                                                  )
-                                                  .quantity
-                                              : 0,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    ProductDetailScreen(
-                                                      product: product,
-                                                    ),
-                                          ),
-                                        );
-                                      },
-                                      onAddToCart: () {
-                                        if (!isInCart) {
-                                          context.read<CartBloc>().add(
-                                            AddToCart(product),
-                                          );
-                                        }
-                                      },
-                                      onIncrement:
-                                          isInCart
-                                              ? () {
-                                                context.read<CartBloc>().add(
-                                                  IncrementCartItemQuantity(
-                                                    product,
-                                                  ),
-                                                );
-                                              }
-                                              : null,
-                                      onDecrement:
-                                          isInCart
-                                              ? () {
-                                                context.read<CartBloc>().add(
-                                                  DecrementCartItemQuantity(
-                                                    product,
-                                                  ),
-                                                );
-                                              }
-                                              : null,
-                                      onToggleFavorite: () {
-                                        context.read<FavoriteBloc>().add(
-                                          ToggleFavorite(product.id),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      );
-                    }
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 30),
             ],
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications),
+              onPressed: () {
+                // Handle notifications
+              },
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await Future.delayed(const Duration(milliseconds: 500));
+            if (Navigator.of(context).mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('تم تحديث الصفحة الرئيسية!')),
+              );
+            }
+          },
+          child: ListView(
+            children: [
+              // Hero Section
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor.withOpacity(0.8),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    ClipOval(
+                      child: SvgPicture.asset(
+                        'assets/logo/logo.svg',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        placeholderBuilder: (context) => const Icon(Icons.image, size: 80, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      localizations.translate('company_tagline'),
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      localizations.translate('services_description'),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Navigate to services
+                        Navigator.pushNamed(context, '/services');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Theme.of(context).primaryColor,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(localizations.translate('our_services')),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Statistics Section
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStatistic(context, '50+', localizations.translate('projects_completed')),
+                    _buildStatistic(context, '30+', localizations.translate('happy_clients')),
+                    _buildStatistic(context, '5+', localizations.translate('years_experience')),
+                  ],
+                ),
+              ),
+              
+              // Featured Services
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      localizations.translate('our_services'),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      localizations.translate('services_description'),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildFeaturedServices(context),
+                  ],
+                ),
+              ),
+              
+              // Latest Projects
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                color: Colors.grey[50],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      localizations.translate('our_work'),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      localizations.translate('portfolio_description'),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildLatestProjects(context),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/portfolio');
+                        },
+                        child: Text(localizations.translate('see_all')),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Why Choose Us
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'لماذا تختارنا؟',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildWhyChooseUs(context),
+                  ],
+                ),
+              ),
+              
+              // Call to Action
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor.withOpacity(0.1),
+                      Theme.of(context).primaryColor.withOpacity(0.05),
+                    ],
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      localizations.translate('ready_to_start'),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      localizations.translate('contact_us_description'),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/contact');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: Text(localizations.translate('contact_us')),
+                        ),
+                        OutlinedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/about');
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: Text(localizations.translate('about')),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _saveScreenshot,
+          child: const Icon(Icons.camera_alt),
+          tooltip: 'التقاط صورة للشاشة',
         ),
       ),
     );
   }
 
-  Widget _buildProductHorizontalList({
-    required BuildContext context,
-    required List<ProductModel> products,
-    bool showDiscountBadge = false,
-    bool showBestSellerBadge = false,
-    bool showSeasonalBadge = false,
-  }) {
-    return BlocBuilder<CartBloc, CartState>(
-      builder: (context, cartState) {
-        return ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            final product = products[index];
-            bool isInCart = false;
+  Widget _buildStatistic(BuildContext context, String number, String label) {
+    return Column(
+      children: [
+        Text(
+          number,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Colors.grey[600],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
 
-            if (cartState is CartLoaded) {
-              isInCart = cartState.items.any(
-                (item) => item.product.name == product.name,
-              );
-            }
+  Widget _buildFeaturedServices(BuildContext context) {
+    final services = [
+      {
+        'icon': Icons.web,
+        'title': 'تطوير المواقع',
+        'description': 'مواقع احترافية متجاوبة',
+        'color': Colors.blue,
+      },
+      {
+        'icon': Icons.phone_android,
+        'title': 'تطوير التطبيقات',
+        'description': 'تطبيقات جوال عالية الأداء',
+        'color': Colors.green,
+      },
+      {
+        'icon': Icons.trending_up,
+        'title': 'التسويق الرقمي',
+        'description': 'حملات تسويقية فعالة',
+        'color': Colors.orange,
+      },
+    ];
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: BlocBuilder<FavoriteBloc, FavoriteState>(
-                builder: (context, favoriteState) {
-                  bool isFavorite = false;
-
-                  if (favoriteState is FavoriteLoaded) {
-                    isFavorite = favoriteState.isFavorite(product.id);
-                  }
-
-                  return Stack(
-                    children: [
-                      ProductCard(
-                        product: product,
-                        isInCart: isInCart,
-                        isFavorite: isFavorite,
-                        quantity:
-                            isInCart && cartState is CartLoaded
-                                ? cartState.items
-                                    .firstWhere(
-                                      (item) =>
-                                          item.product.name == product.name,
-                                      orElse:
-                                          () => CartItemModel(product: product),
-                                    )
-                                    .quantity
-                                : 0,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      ProductDetailScreen(product: product),
-                            ),
-                          );
-                        },
-                        onAddToCart: () {
-                          if (!isInCart) {
-                            context.read<CartBloc>().add(AddToCart(product));
-                          }
-                        },
-                        onIncrement:
-                            isInCart
-                                ? () {
-                                  context.read<CartBloc>().add(
-                                    IncrementCartItemQuantity(product),
-                                  );
-                                }
-                                : null,
-                        onDecrement:
-                            isInCart
-                                ? () {
-                                  context.read<CartBloc>().add(
-                                    DecrementCartItemQuantity(product),
-                                  );
-                                }
-                                : null,
-                        onToggleFavorite: () {
-                          context.read<FavoriteBloc>().add(
-                            ToggleFavorite(product.id),
-                          );
-                        },
-                      ),
-                      if (showDiscountBadge)
-                        Positioned(
-                          top: 10,
-                          left: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              "20% OFF",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (showBestSellerBadge)
-                        Positioned(
-                          top: 10,
-                          left: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.orange,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              "BEST SELLER",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (showSeasonalBadge)
-                        Positioned(
-                          top: 10,
-                          left: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              "SEASONAL",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.8,
+      ),
+      itemCount: services.length,
+      itemBuilder: (context, index) {
+        final service = services[index];
+        return Card(
+          elevation: 4,
+          child: InkWell(
+            onTap: () {
+              Navigator.pushNamed(context, '/services');
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: (service['color'] as Color).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      service['icon'] as IconData,
+                      size: 32,
+                      color: service['color'] as Color,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    service['title'] as String,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    service['description'] as String,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-            );
-          },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLatestProjects(BuildContext context) {
+    final projects = [
+      {
+        'title': 'موقع شركة تجارية',
+        'category': 'تطوير المواقع',
+        'image': 'assets/portfolio/project1.jpg',
+      },
+      {
+        'title': 'تطبيق طلبات الطعام',
+        'category': 'تطوير التطبيقات',
+        'image': 'assets/portfolio/project2.jpg',
+      },
+      {
+        'title': 'حملة تسويقية رقمية',
+        'category': 'التسويق الرقمي',
+        'image': 'assets/portfolio/project3.jpg',
+      },
+    ];
+
+    return SizedBox(
+      height: 200,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: projects.length,
+        itemBuilder: (context, index) {
+          final project = projects[index];
+          return Container(
+            width: 280,
+            margin: const EdgeInsets.only(right: 16),
+            child: Card(
+              elevation: 4,
+              child: InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, '/portfolio');
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
+                          color: Colors.grey[200],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
+                          child: project['image'] != null
+                              ? Image.asset(
+                                  project['image'] as String,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[300],
+                                      child: Icon(
+                                        Icons.image,
+                                        size: 48,
+                                        color: Colors.grey[500],
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Container(
+                                  color: Colors.grey[300],
+                                  child: Icon(
+                                    Icons.image,
+                                    size: 48,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              project['title'] as String,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              project['category'] as String,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildWhyChooseUs(BuildContext context) {
+    final reasons = [
+      {
+        'icon': Icons.verified,
+        'title': 'الجودة العالية',
+        'description': 'نلتزم بأعلى معايير الجودة في جميع مشاريعنا',
+      },
+      {
+        'icon': Icons.schedule,
+        'title': 'الالتزام بالمواعيد',
+        'description': 'نحترم مواعيدنا ونلتزم بتسليم المشاريع في الوقت المحدد',
+      },
+      {
+        'icon': Icons.support_agent,
+        'title': 'الدعم المستمر',
+        'description': 'نقدم دعم فني مستمر لجميع عملائنا',
+      },
+      {
+        'icon': Icons.lightbulb,
+        'title': 'الابتكار',
+        'description': 'نستخدم أحدث التقنيات والحلول المبتكرة',
+      },
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: reasons.length,
+      itemBuilder: (context, index) {
+        final reason = reasons[index];
+        return Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  reason['icon'] as IconData,
+                  size: 32,
+                  color: Theme.of(context).primaryColor,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  reason['title'] as String,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  reason['description'] as String,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

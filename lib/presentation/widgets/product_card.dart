@@ -103,155 +103,169 @@ class ProductCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min, // تحديد الحجم الأدنى للعمود
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    width: 140,
-                    height: 120,
-                    padding: const EdgeInsets.all(10),
-                    child:
-                        product.image.startsWith('http')
-                            ? CachedNetworkImage(
-                              imageUrl: product.image,
-                              width: 120,
-                              fit: BoxFit.cover,
-                              placeholder:
-                                  (context, url) => const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                              errorWidget:
-                                  (context, url, error) =>
-                                      const Center(child: Icon(Icons.error)),
-                            )
-                            : Image.asset(
-                              product.image,
-                              width: 120,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(child: Icon(Icons.error));
-                              },
-                            ),
-                  ),
-                  // زر المفضلة
-                  Positioned(
-                    top: 6,
-                    right: 5,
-                    child: GestureDetector(
-                      onTap: onToggleFavorite,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
+        child: SizedBox(
+          height: 225, // تحديد ارتفاع ثابت للبطاقة
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min, // تحديد الحجم الأدنى للعمود
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      width: 140,
+                      height: 120,
+                      padding: const EdgeInsets.all(10),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
                           color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 2,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? Colors.red : Colors.grey,
-                          size: 18,
+                          child:
+                              product.image.startsWith('http')
+                                  ? CachedNetworkImage(
+                                    imageUrl: product.image,
+                                    width: 120,
+                                    height: 100,
+                                    fit: BoxFit.contain,
+                                    placeholder:
+                                        (context, url) => const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                    errorWidget:
+                                        (context, url, error) => const Center(
+                                          child: Icon(Icons.error),
+                                        ),
+                                  )
+                                  : Image.asset(
+                                    product.image,
+                                    width: 120,
+                                    height: 100,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Center(
+                                        child: Icon(Icons.error),
+                                      );
+                                    },
+                                  ),
                         ),
                       ),
                     ),
-                  ),
-                  // زر السلة أو التحكم بالكمية
-                  Positioned(
-                    bottom: 6,
-                    right: 5,
-                    child:
-                        isInCart
-                            ? _buildQuantityControls()
-                            : GestureDetector(
-                              onTap: onAddToCart,
-                              child: CircleAvatar(
-                                radius: 16,
-                                backgroundColor: Colors.white,
-                                child: const Icon(
-                                  Icons.add_shopping_cart,
-                                  size: 18,
+                    // زر المفضلة
+                    Positioned(
+                      top: 6,
+                      right: 5,
+                      child: GestureDetector(
+                        onTap: onToggleFavorite,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 2,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? Colors.red : Colors.grey,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // زر السلة أو التحكم بالكمية
+                    Positioned(
+                      bottom: 6,
+                      right: 5,
+                      child:
+                          isInCart
+                              ? _buildQuantityControls()
+                              : GestureDetector(
+                                onTap: onAddToCart,
+                                child: CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: Colors.white,
+                                  child: const Icon(
+                                    Icons.add_shopping_cart,
+                                    size: 18,
+                                  ),
                                 ),
                               ),
-                            ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize:
-                    MainAxisSize.min, // تحديد الحجم الأدنى للعمود الداخلي
-                children: [
-                  SizedBox(
-                    width: 140,
-                    child: Text(
-                      product.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset("assets/icons/star.png", width: 16),
-                      const SizedBox(width: 5),
-                      Text(
-                        "${product.rate} (${product.rateCount})",
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize:
+                      MainAxisSize.min, // تحديد الحجم الأدنى للعمود الداخلي
+                  children: [
+                    SizedBox(
+                      width: 140,
+                      child: Text(
+                        product.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Text(
-                        "\$${product.discountedPriceString}",
-                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
                         ),
                       ),
-                      const SizedBox(width: 5),
-                      Text(
-                        "\$${product.price}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          decoration: TextDecoration.lineThrough,
-                          color: Colors.grey.shade600,
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset("assets/icons/star.png", width: 16),
+                        const SizedBox(width: 5),
+                        Text(
+                          "${product.rate} (${product.rateCount})",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5), // تقليل المسافة من 10 إلى 5
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Text(
+                          "\$${product.discountedPriceString}",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          "\$${product.price}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            decoration: TextDecoration.lineThrough,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5), // تقليل المسافة من 10 إلى 5
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

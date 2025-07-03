@@ -10,7 +10,7 @@ import 'package:app_3mcode_shop/presentation/blocs/blocs.dart';
 import 'package:app_3mcode_shop/presentation/screens/screens.dart';
 
 class App extends StatelessWidget {
-  const App({Key? key}) : super(key: key);
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +45,9 @@ class App extends StatelessWidget {
         ),
         BlocProvider<FavoriteBloc>(
           create: (context) => FavoriteBloc()..add(const LoadFavorites()),
+        ),
+        BlocProvider<CourseBloc>(
+          create: (context) => CourseBloc(courseRepository: CourseRepository()),
         ),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(

@@ -157,89 +157,100 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
                   return BlocBuilder<CartBloc, CartState>(
                     builder: (context, cartState) {
-                      return GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.7,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                            ),
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          final product = products[index];
-                          bool isInCart = false;
-
-                          if (cartState is CartLoaded) {
-                            isInCart = cartState.items.any(
-                              (item) => item.product.name == product.name,
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          context.read<ProductBloc>().add(const LoadProducts());
+                          await Future.delayed(const Duration(milliseconds: 500));
+                          if (Navigator.of(context).mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('تم جلب أحدث المنتجات لك!')),
                             );
                           }
-
-                          return BlocBuilder<FavoriteBloc, FavoriteState>(
-                            builder: (context, favoriteState) {
-                              bool isFavorite = false;
-
-                              if (favoriteState is FavoriteLoaded) {
-                                isFavorite = favoriteState.isFavorite(
-                                  product.id,
-                                );
-                              }
-
-                              return ProductCard(
-                                product: product,
-                                isInCart: isInCart,
-                                isFavorite: isFavorite,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => ProductDetailScreen(
-                                            product: product,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                onAddToCart: () {
-                                  if (isInCart) {
-                                    context.read<CartBloc>().add(
-                                      RemoveFromCart(product),
-                                    );
-                                  } else {
-                                    context.read<CartBloc>().add(
-                                      AddToCart(product),
-                                    );
-                                  }
-                                },
-                                onToggleFavorite: () {
-                                  context.read<FavoriteBloc>().add(
-                                    ToggleFavorite(product.id),
-                                  );
-
-                                  // Show confirmation message
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        isFavorite
-                                            ? AppLocalizations.of(
-                                              context,
-                                            ).translate(
-                                              'removed_from_favorites',
-                                            )
-                                            : AppLocalizations.of(
-                                              context,
-                                            ).translate('added_to_favorites'),
-                                      ),
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          );
                         },
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.7,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
+                              ),
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            final product = products[index];
+                            bool isInCart = false;
+
+                            if (cartState is CartLoaded) {
+                              isInCart = cartState.items.any(
+                                (item) => item.product.name == product.name,
+                              );
+                            }
+
+                            return BlocBuilder<FavoriteBloc, FavoriteState>(
+                              builder: (context, favoriteState) {
+                                bool isFavorite = false;
+
+                                if (favoriteState is FavoriteLoaded) {
+                                  isFavorite = favoriteState.isFavorite(
+                                    product.id,
+                                  );
+                                }
+
+                                return ProductCard(
+                                  product: product,
+                                  isInCart: isInCart,
+                                  isFavorite: isFavorite,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => ProductDetailScreen(
+                                              product: product,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  onAddToCart: () {
+                                    if (isInCart) {
+                                      context.read<CartBloc>().add(
+                                        RemoveFromCart(product),
+                                      );
+                                    } else {
+                                      context.read<CartBloc>().add(
+                                        AddToCart(product),
+                                      );
+                                    }
+                                  },
+                                  onToggleFavorite: () {
+                                    context.read<FavoriteBloc>().add(
+                                      ToggleFavorite(product.id),
+                                    );
+
+                                    // Show confirmation message
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          isFavorite
+                                              ? AppLocalizations.of(
+                                                context,
+                                              ).translate(
+                                                'removed_from_favorites',
+                                              )
+                                              : AppLocalizations.of(
+                                                context,
+                                              ).translate('added_to_favorites'),
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        ),
                       );
                     },
                   );

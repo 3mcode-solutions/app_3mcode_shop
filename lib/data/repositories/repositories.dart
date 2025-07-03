@@ -2,3 +2,4 @@
 export 'category_repository.dart';
 export 'product_repository.dart';
 export 'cart_repository.dart';
+export 'course_repository.dart';

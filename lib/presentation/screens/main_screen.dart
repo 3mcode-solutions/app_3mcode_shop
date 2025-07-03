@@ -17,12 +17,10 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const SearchScreen(),
-    const CartScreen(),
-    const FavoritesScreen(),
-    const OrdersScreen(),
-    const AccountScreen(),
-    const WooProductsScreen(), // Added WooCommerce products screen
+    const ServicesScreen(),
+    const PortfolioScreen(),
+    const AboutScreen(),
+    const ContactScreen(),
   ];
 
   @override
@@ -34,84 +32,38 @@ class _MainScreenState extends State<MainScreen> {
       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         body: _screens[_selectedIndex],
-        bottomNavigationBar: BlocBuilder<CartBloc, CartState>(
-          builder: (context, state) {
-            int cartItemCount = 0;
-
-            if (state is CartLoaded) {
-              cartItemCount = state.totalQuantity;
-            }
-
-            return BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              type: BottomNavigationBarType.fixed,
-              items: [
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.home),
-                  label: AppLocalizations.of(context).translate('home'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.search),
-                  label: AppLocalizations.of(context).translate('search'),
-                ),
-                BottomNavigationBarItem(
-                  icon: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.shopping_cart),
-                      if (cartItemCount > 0)
-                        Positioned(
-                          right: -8,
-                          top: -8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              cartItemCount > 9 ? '9+' : '$cartItemCount',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  label: AppLocalizations.of(context).translate('cart'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.favorite),
-                  label: AppLocalizations.of(context).translate('favorites'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.receipt_long),
-                  label: AppLocalizations.of(context).translate('orders'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.person),
-                  label: AppLocalizations.of(context).translate('account'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.shopping_bag),
-                  label: 'WooCommerce',
-                ),
-              ],
-            );
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
           },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: Theme.of(context).primaryColor,
+          unselectedItemColor: Colors.grey,
+          items: [
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.home),
+              label: AppLocalizations.of(context).translate('home'),
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.build),
+              label: AppLocalizations.of(context).translate('services'),
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.work),
+              label: AppLocalizations.of(context).translate('portfolio'),
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.info),
+              label: AppLocalizations.of(context).translate('about'),
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.phone),
+              label: AppLocalizations.of(context).translate('contact'),
+            ),
+          ],
         ),
       ),
     );

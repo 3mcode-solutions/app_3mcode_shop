@@ -26,3 +26,7 @@ export 'auth/auth_state.dart';
 export 'favorite/favorite_bloc.dart';
 export 'favorite/favorite_event.dart';
 export 'favorite/favorite_state.dart';
+
+export 'course/course_bloc.dart';
+export 'course/course_event.dart';
+export 'course/course_state.dart';
